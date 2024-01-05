@@ -1,4 +1,5 @@
 
+#[derive(Debug)]
 pub enum Status<T> {
     Yield(T),
     Final(T),
