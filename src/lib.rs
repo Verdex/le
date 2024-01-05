@@ -21,8 +21,8 @@ pub trait LeVm : Clone {
     type Memory;
     type Incrmental<'a> : IncrementalState where Self : 'a;
 
-    fn run(&mut self, input : Vec<Self::Memory>) -> Result<Status<Self::Memory>, Self::Error>;
-    fn run_incremental<'a>(&'a mut self, input : Vec<Self::Memory>) -> Self::Incrmental<'a>;
+    fn run(&mut self, input : Self::Memory) -> Result<Status<Self::Memory>, Self::Error>;
+    fn run_incremental<'a>(&'a mut self, input : Self::Memory) -> Self::Incrmental<'a>;
 }
 
 
