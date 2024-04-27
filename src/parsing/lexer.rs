@@ -3,7 +3,7 @@ use std::str::CharIndices as I;
 
 #[derive(Debug)]
 pub enum LexError {
-
+    BlockCommentEof,
 }
 
 #[derive(Debug)]
@@ -51,7 +51,41 @@ fn line_comment(input : &mut I) -> Result<(), LexError> {
 
 fn block_comment(input : &mut I) -> Result<(), LexError> {
 
-    todo!()
+    #[derive(PartialEq)]
+    enum State {
+        StartSlash,
+        EndStar,
+        Idle,
+    }
+
+    let mut state = State::Idle;
+    let mut nest_level = 1;
+
+    loop {
+        match input.next() {
+            Some((_, '*')) if state == State::StartSlash => {  
+                state == State::Idle;
+                next_level += 1;
+            },
+
+            Some((_, '*')) => { state = State::EndStar; },
+
+            Some((_, '/')) if state == State::EndStar => { 
+                state = State::Idle;
+                nest_level -= 1; 
+            },
+
+            Some((_, '/')) => { state = State::StartSlash; },
+
+            _ => {
+                state = State::Idle;
+            },
+        }
+
+        if nest_level == 0 {
+            return Ok(());
+        }
+    }
 }
 
 #[cfg(test)] 
