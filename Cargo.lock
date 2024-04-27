@@ -3,5 +3,13 @@
 version = 3
 
 [[package]]
+name = "dealize"
+version = "0.5.0"
+source = "git+https://www.github.com/verdex/dealize?tag=release-0.5.0#ef7579d8f159e61a169540c541962fbfd00ab383"
+
+[[package]]
 name = "le"
 version = "0.1.0"
+dependencies = [
+ "dealize",
+]
