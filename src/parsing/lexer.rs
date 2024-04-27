@@ -77,6 +77,10 @@ fn block_comment(input : &mut I) -> Result<(), LexError> {
 
             Some((_, '/')) => { state = State::StartSlash; },
 
+            None => {
+                return Err(LexError::BlockCommentEof);
+            },
+
             _ => {
                 state = State::Idle;
             },
