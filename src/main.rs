@@ -1,5 +1,6 @@
 
 mod parsing;
+mod execution;
 mod repl;
 
 pub fn main() {
