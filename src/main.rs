@@ -1,7 +1,7 @@
 
 mod parsing;
 mod execution;
-mod repl;
+mod eval;
 
 pub fn main() {
     println!("blarg");
