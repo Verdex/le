@@ -8,7 +8,7 @@ pub enum LexError {
 
 #[derive(Debug)]
 pub enum Token {
-    Number(Box<str>),
+    Number(Box<str>, usize, usize),
 }
 
 pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
@@ -34,11 +34,13 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
                 state = State::Idle;
                 block_comment(input)?;
             },
-            Some((_, x)) if x.is_digit(10) || x == '-' => {
+            Some((n, x)) if x.is_digit(10) || x == '-' => {
                 state = State::Idle;
-                let n = number(x, input)?;
+                let (lo, num) = number(n, x, input)?;
+                left_over = lo;
+                ts.push(num);
             },
-            //Some((_, x)) if x.is_digit() => ,
+            None if state == State::Idle => { break; },
             _ => todo!(),
         }
     }
@@ -46,14 +48,26 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
     Ok(ts)
 }
 
-fn number(init : char, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
-    todo!()
-    /*let xs = vec![];
+fn number(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
+    let mut last = 0;
+    let mut left_over = None;
+    let mut xs = vec![init];
     loop {
         match input.next() {
-
+            Some((n, x)) if x.is_digit(10) => {
+                last = n;
+                xs.push(x);
+            },
+            Some((n, '.')) => { 
+                last = n;
+                xs.push('.');
+            },
+            None => { break; },
+            x => { left_over = x; break; },
         }
-    }*/
+    }
+
+    Ok((left_over, Token::Number(xs.into_iter().collect::<String>().into(), first, last)))
 }
 
 fn line_comment(input : &mut I) -> Result<(), LexError> {
