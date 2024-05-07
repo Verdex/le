@@ -19,3 +19,5 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
 
     Ok(ret)
 }
+
+// TODO ast => [instr]
