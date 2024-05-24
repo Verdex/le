@@ -1,4 +1,6 @@
 
+use super::data::Instr;
+
 pub struct Vm {
 
 }
