@@ -1,7 +1,7 @@
 
 mod parsing;
-mod execution; // todo vm
-mod eval; // todo repl
+mod execution; 
+mod eval; 
 
 pub fn main() {
     println!("blarg");
