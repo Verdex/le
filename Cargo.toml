@@ -6,4 +6,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dealize = { git = "https://www.github.com/verdex/dealize", version = "0.5.0", tag = "release-0.5.0" }
+dealize = { git = "https://www.github.com/verdex/dealize", version = "0.6.0", tag = "release-0.6.0" }
