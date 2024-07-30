@@ -3,7 +3,7 @@ use std::error::Error;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use dealize::jerboa::{self, Rule};
+use dealize::jerboa::{self, Rule, Match};
 
 use super::lexer::*;
 
@@ -66,5 +66,13 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, Box<dyn Error>> {
 }
 
 fn init_rules() -> Rc<Rule<Token, Ast>> {
-    todo!()
+
+    let number = Rule::new( "number"
+                          , vec![Match::pred(|x, _| matches!(x, Token::Number(_, _, _)))]
+                          , |mut results| match results.remove(0).unwrap().unwrap() {
+                                        Token::Number(n, _, _) => Ok(Ast::Number(n.clone())),
+                                        _ => unreachable!(),
+                          });
+
+    Rule::new("main", vec![Match::choice(&[&number])], |mut results| Ok(results.remove(0).unwrap_result().unwrap()))
 }
