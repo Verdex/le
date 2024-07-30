@@ -1,7 +1,6 @@
 
 
 pub struct Interpreter {
-    Number(f64),
 }
 
 impl Interpreter {
