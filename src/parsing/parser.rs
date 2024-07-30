@@ -76,3 +76,25 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     Rule::new("main", vec![Match::choice(&[&number])], |mut results| Ok(results.remove(0).unwrap_result().unwrap()))
 }
+
+
+#[cfg(test)] 
+mod test {
+    use super::*;
+    use super::super::lexer;
+
+    #[test]
+    fn should_parse_number() {
+        let input = lexer::lex(&mut "100".char_indices()).unwrap();
+        let output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+
+        if let Ast::Number(v) = &output[0] {
+            assert_eq!(*v, "100".into());
+        }
+        else {
+            assert!(false);
+        }
+    }
+
+}
