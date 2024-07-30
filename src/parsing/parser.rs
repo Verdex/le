@@ -1,5 +1,9 @@
 
 use std::error::Error;
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use dealize::jerboa::{self, Rule};
 
 use super::lexer::*;
 
@@ -44,8 +48,16 @@ pub enum Ast {
     },
 }
 
+
+thread_local!{
+    static RULE : RefCell<Rc<Rule<Token, Ast>>> = RefCell::new(init_rules());
+}
+
 // TODO:  Use Jerboa
 pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, Box<dyn Error>> {
+
+    let _ = RULE.with_borrow(|rule| jerboa::parse(&input, Rc::clone(rule)));
+
     let ret = input.into_iter().map(|x| match x {
         Token::Number(n, s, e) => Ast::Number(n),
     }).collect::<Vec<Ast>>();
@@ -53,4 +65,6 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, Box<dyn Error>> {
     Ok(ret)
 }
 
-// TODO ast => [instr]
+fn init_rules() -> Rc<Rule<Token, Ast>> {
+    todo!()
+}
