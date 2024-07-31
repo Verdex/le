@@ -56,6 +56,10 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
             Some((_, '/')) => {
                 line_or_block_comment(input)?;
             },
+            Some((n, ',')) => {
+                ts.push(Token::Comma(n));
+                left_over = None;
+            },
             Some((n, x)) if x.is_digit(10) || x == '-' => {
                 let (lo, num) = number(n, x, input)?;
                 left_over = lo;
