@@ -4,12 +4,16 @@ use std::str::CharIndices as I;
 #[derive(Debug)]
 pub enum LexError {
     BlockCommentEof,
+    SlashEof,
+    SlashUnknown(char, usize),
 }
 
 impl std::fmt::Display for LexError {
     fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             LexError::BlockCommentEof => write!(f, "end of file encountered mid block comment"),
+            LexError::SlashEof => write!(f, "end of file encountered after '/'"),
+            LexError::SlashUnknown(c, n) => write!(f, "slash followed by unexpected '{}' at {}", c, n),
         }
     }
 }
@@ -41,36 +45,21 @@ pub enum Token {
 
 pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
 
-    #[derive(PartialEq)]
-    enum State {
-        StartSlash,
-        Idle,
-    }
-
     let mut ts : Vec<Token> = vec![];
 
     let mut left_over : Option<(usize, char)> = None;
-    let mut state = State::Idle;
     loop {
         match left_over.or_else(|| input.next()) {
             // TODO whitespace
-            // TODO once you see / then you know that it's either line comment or block so line_or_block_comment(input)?
-            Some((_, '/')) if state == State::StartSlash => { 
-                state = State::Idle;
-                line_comment(input)?; 
-            },
-            Some((_, '/')) => { state = State::StartSlash; },
-            Some((_, '*')) if state == State::StartSlash => { 
-                state = State::Idle;
-                block_comment(input)?;
+            Some((_, '/')) => {
+                line_or_block_comment(input)?;
             },
             Some((n, x)) if x.is_digit(10) || x == '-' => {
-                state = State::Idle;
                 let (lo, num) = number(n, x, input)?;
                 left_over = lo;
                 ts.push(num);
             },
-            None if state == State::Idle => { break; },
+            None => { break; },
             _ => todo!(),
         }
     }
@@ -99,6 +88,15 @@ fn number(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, 
     }
 
     Ok((left_over, Token::Number(xs.into_iter().collect::<String>().into(), first, last)))
+}
+
+fn line_or_block_comment(input : &mut I) -> Result<(), LexError> {
+    match input.next() {
+        None => Err(LexError::SlashEof),
+        Some((_, '*')) => block_comment(input),
+        Some((_, '/')) => line_comment(input),
+        Some((n, c)) => Err(LexError::SlashUnknown(c, n)),
+    }
 }
 
 fn line_comment(input : &mut I) -> Result<(), LexError> {
