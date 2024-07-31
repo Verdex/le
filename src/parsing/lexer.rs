@@ -9,6 +9,24 @@ pub enum LexError {
 #[derive(Debug)]
 pub enum Token {
     Number(Box<str>, usize, usize),
+    Symbol(Box<str>, usize, usize),
+    String(Box<str>, usize, usize),
+    LSquare(usize),
+    RSquare(usize),
+    LCurl(usize),
+    RCurl(usize),
+    LParen(usize),
+    RParen(usize),
+    LAngle(usize),
+    RAngle(usize),
+    Dot(usize),
+    Comma(usize),
+    Semicolon(usize),
+    Colon(usize),
+    Equal(usize),
+    LeftArrow(usize, usize),
+    DoubleLeftArrow(usize, usize),
+    Triangle(usize, usize, usize),
 }
 
 pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
