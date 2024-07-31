@@ -148,4 +148,48 @@ fn block_comment(input : &mut I) -> Result<(), LexError> {
 mod test {
     use super::*;
 
+    fn proj_num(input : &Token) -> String {
+        match input {
+            Token::Number(x, _, _) => x.to_string(),
+            _ => panic!("not a number"),
+        }
+    }
+
+    #[test]
+    fn should_lex_number() {
+        let mut input = "100".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 1);
+        assert_eq!(proj_num(&output[0]), "100");
+    }
+
+    #[test]
+    fn should_lex_negative_number() {
+        let mut input = "-100".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 1);
+        assert_eq!(proj_num(&output[0]), "-100");
+    }
+
+    #[test]
+    fn should_lex_decimal_number() {
+        let mut input = "100.25".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 1);
+        assert_eq!(proj_num(&output[0]), "100.25");
+    }
+
+    #[test]
+    fn should_lex_negative_decimal_number() {
+        let mut input = "-100.25".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 1);
+        assert_eq!(proj_num(&output[0]), "-100.25");
+    }
+
+    // TODO Sci Notation tests
 }
