@@ -53,16 +53,8 @@ thread_local!{
     static RULE : RefCell<Rc<Rule<Token, Ast>>> = RefCell::new(init_rules());
 }
 
-// TODO:  Use Jerboa
 pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, Box<dyn Error>> {
-
-    let _ = RULE.with_borrow(|rule| jerboa::parse(&input, Rc::clone(rule)));
-
-    let ret = input.into_iter().map(|x| match x {
-        Token::Number(n, s, e) => Ast::Number(n),
-    }).collect::<Vec<Ast>>();
-
-    Ok(ret)
+    Ok(RULE.with_borrow(|rule| jerboa::parse(&input, Rc::clone(rule)))?)
 }
 
 fn init_rules() -> Rc<Rule<Token, Ast>> {
