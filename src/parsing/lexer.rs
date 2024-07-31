@@ -26,7 +26,7 @@ pub enum Token {
     Equal(usize),
     LeftArrow(usize, usize),
     DoubleLeftArrow(usize, usize),
-    Triangle(usize, usize, usize),
+    Triangle(usize, usize, usize), // TODO |> |2>
 }
 
 pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
@@ -43,6 +43,8 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
     let mut state = State::Idle;
     loop {
         match left_over.or_else(|| input.next()) {
+            // TODO whitespace
+            // TODO once you see / then you know that it's either line comment or block so line_or_block_comment(input)?
             Some((_, '/')) if state == State::StartSlash => { 
                 state = State::Idle;
                 line_comment(input)?; 
@@ -71,6 +73,7 @@ fn number(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, 
     let mut left_over = None;
     let mut xs = vec![init];
     loop {
+        // TODO sci not
         match input.next() {
             Some((n, x)) if x.is_digit(10) => {
                 last = n;
