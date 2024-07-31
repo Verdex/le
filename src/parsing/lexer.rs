@@ -6,6 +6,16 @@ pub enum LexError {
     BlockCommentEof,
 }
 
+impl std::fmt::Display for LexError {
+    fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            LexError::BlockCommentEof => write!(f, "end of file encountered mid block comment"),
+        }
+    }
+}
+
+impl std::error::Error for LexError { }
+
 #[derive(Debug)]
 pub enum Token {
     Number(Box<str>, usize, usize),
