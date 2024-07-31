@@ -191,5 +191,30 @@ mod test {
         assert_eq!(proj_num(&output[0]), "-100.25");
     }
 
+    #[test]
+    fn should_lex_line_comment() {
+        let mut input = "// ~~~~ ".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 0);
+    }
+
+    #[test]
+    fn should_lex_block_comment() {
+        let mut input = "/* ~~
+        ~~ */".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 0);
+    }
+
+    #[test]
+    fn should_lex_nested_block_comment() {
+        let mut input = "/* ~
+        ~/*~~*/~ */".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 0);
+    }
     // TODO Sci Notation tests
 }
