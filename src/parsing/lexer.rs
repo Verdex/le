@@ -50,7 +50,9 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
     let mut left_over : Option<(usize, char)> = None;
     loop {
         match left_over.or_else(|| input.next()) {
-            // TODO whitespace
+            Some((_, c)) if c.is_whitespace() => {
+                left_over = whitespace(input)?;
+            },
             Some((_, '/')) => {
                 line_or_block_comment(input)?;
             },
@@ -88,6 +90,16 @@ fn number(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, 
     }
 
     Ok((left_over, Token::Number(xs.into_iter().collect::<String>().into(), first, last)))
+}
+
+fn whitespace(input : &mut I) -> Result<Option<(usize, char)>, LexError> {
+    loop {
+        match input.next() {
+            None => { return Ok(None); },
+            Some((_, c)) if c.is_whitespace() => { },
+            Some(x) => { return Ok(Some(x)); },
+        }
+    }
 }
 
 fn line_or_block_comment(input : &mut I) -> Result<(), LexError> {
@@ -223,6 +235,23 @@ mod test {
         let output = lex(&mut input).unwrap();
 
         assert_eq!(output.len(), 0);
+    }
+
+    #[test]
+    fn should_lex_whitespace_ending_in_eof() {
+        let mut input = "   ".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 0);
+    }
+
+    #[test]
+    fn should_lex_whitespace_ending_in_number() {
+        let mut input = "   8".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 1);
+        assert_eq!(proj_num(&output[0]), "8");
     }
     // TODO Sci Notation tests
 }
