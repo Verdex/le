@@ -336,4 +336,39 @@ mod test {
         assert_eq!(proj_num(&output[0]), "8");
     }
     // TODO Sci Notation tests
+
+    #[test]
+    fn should_lex_number_followed_by_r_arrow() {
+        let mut input = "25.->".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 2);
+        assert!(matches!(output[0], Token::Number(_, _, _)));
+        assert!(matches!(output[1], Token::RArrow(_, _)));
+
+        assert_eq!(proj_num(&output[0]), "25.");
+    }
+
+    #[test]
+    fn should_lex_punct() {
+        let mut input = "->==>()[]{}<>,:;.".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 15);
+        assert!(matches!(output[0], Token::RArrow(_, _)));
+        assert!(matches!(output[1], Token::Equal(_)));
+        assert!(matches!(output[2], Token::R2Arrow(_, _)));
+        assert!(matches!(output[3], Token::LParen(_)));
+        assert!(matches!(output[4], Token::RParen(_)));
+        assert!(matches!(output[5], Token::LSquare(_)));
+        assert!(matches!(output[6], Token::RSquare(_)));
+        assert!(matches!(output[7], Token::LCurl(_)));
+        assert!(matches!(output[8], Token::RCurl(_)));
+        assert!(matches!(output[9], Token::LAngle(_)));
+        assert!(matches!(output[10], Token::RAngle(_)));
+        assert!(matches!(output[11], Token::Comma(_)));
+        assert!(matches!(output[12], Token::Colon(_)));
+        assert!(matches!(output[13], Token::Semicolon(_)));
+        assert!(matches!(output[14], Token::Dot(_)));
+    }
 }
