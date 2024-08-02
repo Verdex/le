@@ -107,7 +107,7 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
                 left_over = None;
             },
             Some((n, x)) if x.is_digit(10) || x == '-' => {
-                let (lo, num) = number(n, x, input)?;
+                let (lo, num) = number_or_right_arrow(n, x, input)?;
                 left_over = lo;
                 ts.push(num);
             },
@@ -119,12 +119,32 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
     Ok(ts)
 }
 
-fn number(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
-    let mut last = 0;
+fn number_or_right_arrow(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
+    if init != '-' {
+        number(first, (init, None), input)
+    }
+    else {
+        match input.next() {
+            None => Err(LexError::MinusEof),
+            Some(x @ (_, c)) if c.is_digit(10) || c == '.' => number(first, (init, Some(x)), input),
+            Some((n, c)) if c == '>' => Ok((None, Token::RArrow(first, n))),
+            _ => todo!(),
+        }
+    }
+}
+
+fn number(first : usize, init : (char, Option<(usize, char)>), input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
+    let mut last = first;
     let mut left_over = None;
-    let mut xs = vec![init];
+    let mut xs = vec![init.0];
+    if init.1.is_some() {
+        let (n, c) = init.1.unwrap();
+        xs.push(c);
+        last = n;
+    }
     loop {
         // TODO sci not
+        // TODO make sure multiple .s don't show up
         match input.next() {
             Some((n, x)) if x.is_digit(10) => {
                 last = n;
