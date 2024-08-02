@@ -124,7 +124,11 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
 }
 
 fn equal_or_right_2_arrow(first : usize, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
-    todo!()
+    match input.next() {
+        None => Err(LexError::UnexpectedEof('=')),
+        Some((n, '>')) => Ok((None, Token::R2Arrow(first, n))),
+        Some(x) => Ok((Some(x), Token::Equal(first))),
+    }
 }
 
 fn number_or_right_arrow(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
