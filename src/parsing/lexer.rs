@@ -40,8 +40,8 @@ pub enum Token {
     Semicolon(usize),
     Colon(usize),
     Equal(usize),
-    LeftArrow(usize, usize),
-    DoubleLeftArrow(usize, usize),
+    RArrow(usize, usize),
+    R2Arrow(usize, usize),
     Triangle(usize, usize, usize), // TODO |> |2>
 }
 
