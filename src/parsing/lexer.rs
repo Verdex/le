@@ -41,7 +41,7 @@ pub enum Token {
     Equal(usize),
     RArrow(usize, usize),
     R2Arrow(usize, usize),
-    Triangle(usize, usize, usize), // TODO |> |2>
+    Triangle { param : usize, start : usize, end : usize }, 
 }
 
 pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
@@ -110,6 +110,11 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
                 left_over = lo;
                 ts.push(x);
             },
+            Some((n, '|')) => {
+                let x = triangle(n, input)?;
+                left_over = None;
+                ts.push(x);
+            },
             Some((n, x)) if x.is_digit(10) || x == '-' => {
                 let (lo, num) = number_or_right_arrow(n, x, input)?;
                 left_over = lo;
@@ -121,6 +126,29 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
     }
 
     Ok(ts)
+}
+
+fn triangle(first : usize, input : &mut I) -> Result<Token, LexError> {
+    match input.next() {
+        None => Err(LexError::UnexpectedEof('|')),
+        Some((n, '>')) => Ok(Token::Triangle{ param: 0, start : first, end: n}),
+        Some((n, x)) if x.is_digit(10) => {
+            let mut ds = vec![x];
+            let end = loop {
+                match input.next() {
+                    None => { return Err(LexError::UnexpectedEof(ds[ds.len() - 1])); },
+                    Some((_, x)) if x.is_digit(10) => { ds.push(x); },
+                    Some((end, '>')) => { break end; },
+                    Some((n, c)) => { 
+                        return Err(LexError::UnexpectedUnknown { before: ds[ds.len() - 1], unexpected: c, loc: n}); 
+                    },
+                }
+            };
+            let param = ds.into_iter().collect::<String>().parse::<usize>().unwrap();
+            Ok(Token::Triangle { param, start: first, end })
+        },
+        Some((n, c)) => { Err(LexError::UnexpectedUnknown { before: '|', unexpected: c, loc: n}) },
+    }
 }
 
 fn equal_or_right_2_arrow(first : usize, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
@@ -370,5 +398,26 @@ mod test {
         assert!(matches!(output[12], Token::Colon(_)));
         assert!(matches!(output[13], Token::Semicolon(_)));
         assert!(matches!(output[14], Token::Dot(_)));
+    }
+
+    #[test]
+    fn should_lex_triangle() {
+        fn a(t : &Token, p : usize) {
+            match t {
+                Token::Triangle { param, .. } => {
+                    assert_eq!(*param, p);
+                },
+                _ => { panic!("Encountered unexpected token"); },
+            }
+        }
+
+        let mut input = "|> |1> |10> |100>".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 4);
+        a(&output[0], 0);
+        a(&output[1], 1);
+        a(&output[2], 10);
+        a(&output[3], 100);
     }
 }
