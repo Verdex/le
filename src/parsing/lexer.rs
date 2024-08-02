@@ -104,6 +104,11 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
                 ts.push(Token::Comma(n));
                 left_over = None;
             },
+            Some((n, '=')) => {
+                let (lo, x) = equal_or_right_2_arrow(n, x, input)?;
+                left_over = lo;
+                ts.push(x);
+            },
             Some((n, x)) if x.is_digit(10) || x == '-' => {
                 let (lo, num) = number_or_right_arrow(n, x, input)?;
                 left_over = lo;
@@ -115,6 +120,10 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
     }
 
     Ok(ts)
+}
+
+fn equal_or_right_2_arrow(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
+
 }
 
 fn number_or_right_arrow(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
