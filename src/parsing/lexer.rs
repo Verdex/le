@@ -136,7 +136,7 @@ fn number_or_right_arrow(first : usize, init : char, input : &mut I) -> Result<(
             None => Err(LexError::UnexpectedEof('-')),
             Some(x @ (_, c)) if c.is_digit(10) || c == '.' => number(first, (init, Some(x)), input),
             Some((n, c)) if c == '>' => Ok((None, Token::RArrow(first, n))),
-            _ => todo!(),
+            Some((loc, unexpected))=> Err(LexError::UnexpectedUnknown{before: '-', unexpected, loc}),
         }
     }
 }
