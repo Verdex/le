@@ -4,8 +4,7 @@ use std::str::CharIndices as I;
 #[derive(Debug)]
 pub enum LexError {
     BlockCommentEof,
-    SlashEof,
-    MinusEof,
+    UnexpectedEof(char),
     SlashUnknown(char, usize),
 }
 
@@ -13,9 +12,8 @@ impl std::fmt::Display for LexError {
     fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             LexError::BlockCommentEof => write!(f, "end of file encountered mid block comment"),
-            LexError::SlashEof => write!(f, "end of file encountered after '/'"),
+            LexError::UnexpectedEof(c) => write!(f, "end of file encountered after '{}'", c),
             LexError::SlashUnknown(c, n) => write!(f, "slash followed by unexpected '{}' at {}", c, n),
-            LexError::MinusEof => write!(f, "end of file encountered after '-'"),
         }
     }
 }
@@ -125,7 +123,7 @@ fn number_or_right_arrow(first : usize, init : char, input : &mut I) -> Result<(
     }
     else {
         match input.next() {
-            None => Err(LexError::MinusEof),
+            None => Err(LexError::UnexpectedEof('-')),
             Some(x @ (_, c)) if c.is_digit(10) || c == '.' => number(first, (init, Some(x)), input),
             Some((n, c)) if c == '>' => Ok((None, Token::RArrow(first, n))),
             _ => todo!(),
@@ -174,7 +172,7 @@ fn whitespace(input : &mut I) -> Result<Option<(usize, char)>, LexError> {
 
 fn line_or_block_comment(input : &mut I) -> Result<(), LexError> {
     match input.next() {
-        None => Err(LexError::SlashEof),
+        None => Err(LexError::UnexpectedEof('/')),
         Some((_, '*')) => block_comment(input),
         Some((_, '/')) => line_comment(input),
         Some((n, c)) => Err(LexError::SlashUnknown(c, n)),
