@@ -5,7 +5,7 @@ use std::str::CharIndices as I;
 pub enum LexError {
     BlockCommentEof,
     UnexpectedEof(char),
-    SlashUnknown(char, usize),
+    UnexpectedUnknown{ before: char, unexpected : char, loc : usize },
 }
 
 impl std::fmt::Display for LexError {
@@ -13,7 +13,8 @@ impl std::fmt::Display for LexError {
         match self {
             LexError::BlockCommentEof => write!(f, "end of file encountered mid block comment"),
             LexError::UnexpectedEof(c) => write!(f, "end of file encountered after '{}'", c),
-            LexError::SlashUnknown(c, n) => write!(f, "slash followed by unexpected '{}' at {}", c, n),
+            LexError::UnexpectedUnknown { before, unexpected, loc } 
+                => write!(f, "{} followed by unexpected {} at {}", before, unexpected, loc),
         }
     }
 }
@@ -105,7 +106,7 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
                 left_over = None;
             },
             Some((n, '=')) => {
-                let (lo, x) = equal_or_right_2_arrow(n, x, input)?;
+                let (lo, x) = equal_or_right_2_arrow(n, input)?;
                 left_over = lo;
                 ts.push(x);
             },
@@ -122,8 +123,8 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
     Ok(ts)
 }
 
-fn equal_or_right_2_arrow(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
-
+fn equal_or_right_2_arrow(first : usize, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
+    todo!()
 }
 
 fn number_or_right_arrow(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
@@ -184,7 +185,7 @@ fn line_or_block_comment(input : &mut I) -> Result<(), LexError> {
         None => Err(LexError::UnexpectedEof('/')),
         Some((_, '*')) => block_comment(input),
         Some((_, '/')) => line_comment(input),
-        Some((n, c)) => Err(LexError::SlashUnknown(c, n)),
+        Some((n, c)) => Err(LexError::UnexpectedUnknown { before: '/', unexpected: c, loc: n }),
     }
 }
 
