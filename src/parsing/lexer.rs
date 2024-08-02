@@ -58,6 +58,50 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
             Some((_, '/')) => {
                 line_or_block_comment(input)?;
             },
+            Some((n, '(')) => {
+                ts.push(Token::LParen(n));
+                left_over = None;
+            },
+            Some((n, ')')) => {
+                ts.push(Token::RParen(n));
+                left_over = None;
+            },
+            Some((n, '<')) => {
+                ts.push(Token::LAngle(n));
+                left_over = None;
+            },
+            Some((n, '>')) => {
+                ts.push(Token::RAngle(n));
+                left_over = None;
+            },
+            Some((n, '{')) => {
+                ts.push(Token::LCurl(n));
+                left_over = None;
+            },
+            Some((n, '}')) => {
+                ts.push(Token::RCurl(n));
+                left_over = None;
+            },
+            Some((n, '[')) => {
+                ts.push(Token::LSquare(n));
+                left_over = None;
+            },
+            Some((n, ']')) => {
+                ts.push(Token::RSquare(n));
+                left_over = None;
+            },
+            Some((n, ':')) => {
+                ts.push(Token::Colon(n));
+                left_over = None;
+            },
+            Some((n, ';')) => {
+                ts.push(Token::Semicolon(n));
+                left_over = None;
+            },
+            Some((n, '.')) => {
+                ts.push(Token::Dot(n));
+                left_over = None;
+            },
             Some((n, ',')) => {
                 ts.push(Token::Comma(n));
                 left_over = None;
