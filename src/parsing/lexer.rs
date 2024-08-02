@@ -5,6 +5,7 @@ use std::str::CharIndices as I;
 pub enum LexError {
     BlockCommentEof,
     SlashEof,
+    MinusEof,
     SlashUnknown(char, usize),
 }
 
@@ -14,6 +15,7 @@ impl std::fmt::Display for LexError {
             LexError::BlockCommentEof => write!(f, "end of file encountered mid block comment"),
             LexError::SlashEof => write!(f, "end of file encountered after '/'"),
             LexError::SlashUnknown(c, n) => write!(f, "slash followed by unexpected '{}' at {}", c, n),
+            LexError::MinusEof => write!(f, "end of file encountered after '-'"),
         }
     }
 }
