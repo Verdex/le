@@ -153,7 +153,7 @@ fn string(first : usize, input : &mut I) -> Result<Token, LexError> {
         match input.next() {
             None => { return Err(LexError::StringEof); },
             Some((_, '"')) if escape => {
-                xs.push('\"');
+                xs.push('"');
                 escape = false;
             },
             Some((_, '0')) if escape => {
@@ -180,12 +180,12 @@ fn string(first : usize, input : &mut I) -> Result<Token, LexError> {
                 escape = true;
             },
             Some((n, c)) if escape => { return Err(LexError::UnknownEscape(c, n)); },
-            Some((_, c)) => {
-                xs.push(c);
-            },
             Some((n, '"')) => { 
                 last = n; 
                 break; 
+            },
+            Some((_, c)) => {
+                xs.push(c);
             },
         }
     }
@@ -375,6 +375,13 @@ mod test {
         }
     }
 
+    fn proj_str(input : &Token) -> String {
+        match input {
+            Token::String(x, _, _) => x.to_string(),
+            _ => panic!("not a string"),
+        }
+    }
+
     #[test]
     fn should_lex_number() {
         let mut input = "100".char_indices();
@@ -522,5 +529,15 @@ mod test {
         assert_eq!(proj_sym(&output[2]), "_symbol");
         assert_eq!(proj_sym(&output[3]), "_1");
         assert_eq!(proj_sym(&output[4]), "Symbol_8");
+    }
+
+    #[test]
+    fn should_lex_string() {
+        let mut input = r#" "string !@#$%^&* \n\t\r\0\\\"". "#.char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 2);
+        assert_eq!(proj_str(&output[0]), "string !@#$%^&* \n\t\r\0\\\"");
+        assert!(matches!(output[1], Token::Dot(_)));
     }
 }
