@@ -4,19 +4,23 @@ use std::str::CharIndices as I;
 #[derive(Debug)]
 pub enum LexError {
     BlockCommentEof,
+    StringEof, 
     UnexpectedEof(char),
     UnexpectedUnknown{ before: char, unexpected : char, loc : usize },
     UnexpectedChar(char, usize),
+    UnknownEscape(char, usize),
 }
 
 impl std::fmt::Display for LexError {
     fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
+            LexError::StringEof => write!(f, "end of file encountered mid string"),
             LexError::BlockCommentEof => write!(f, "end of file encountered mid block comment"),
             LexError::UnexpectedEof(c) => write!(f, "end of file encountered after '{}'", c),
             LexError::UnexpectedUnknown { before, unexpected, loc } 
                 => write!(f, "{} followed by unexpected {} at {}", before, unexpected, loc),
             LexError::UnexpectedChar(c, n) => write!(f, "encountered unexpected {} at {}", c, n),
+            LexError::UnknownEscape(c, n) => write!(f, "unknown escape character {} found in string at {}", c, n),
         }
     }
 }
@@ -63,6 +67,7 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
             },
             Some((_, '/')) => {
                 line_or_block_comment(input)?;
+                left_over = None;
             },
             Some((n, '(')) => {
                 ts.push(Token::LParen(n));
@@ -127,12 +132,65 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
                 left_over = lo;
                 ts.push(num);
             },
+            Some((n, '"')) => {
+                let s = string(n, input)?;
+                left_over = None;
+                ts.push(s);
+            },
             None => { break; },
             Some((n, x)) => { return Err(LexError::UnexpectedChar(x, n)); },
         }
     }
 
     Ok(ts)
+}
+
+fn string(first : usize, input : &mut I) -> Result<Token, LexError> {
+    let mut last = first;
+    let mut xs = vec![];
+    let mut escape = false;
+    loop {
+        match input.next() {
+            None => { return Err(LexError::StringEof); },
+            Some((_, '"')) if escape => {
+                xs.push('\"');
+                escape = false;
+            },
+            Some((_, '0')) if escape => {
+                xs.push('\0');
+                escape = false;
+            },
+            Some((_, 't')) if escape => {
+                xs.push('\t');
+                escape = false;
+            },
+            Some((_, 'r')) if escape => {
+                xs.push('\r');
+                escape = false;
+            },
+            Some((_, 'n')) if escape => {
+                xs.push('\n');
+                escape = false;
+            },
+            Some((_, '\\')) if escape => {
+                xs.push('\\');
+                escape = false;
+            },
+            Some((_, '\\')) => {
+                escape = true;
+            },
+            Some((n, c)) if escape => { return Err(LexError::UnknownEscape(c, n)); },
+            Some((_, c)) => {
+                xs.push(c);
+            },
+            Some((n, '"')) => { 
+                last = n; 
+                break; 
+            },
+        }
+    }
+
+    Ok(Token::String(xs.into_iter().collect::<String>().into(), first, last))
 }
 
 fn triangle(first : usize, input : &mut I) -> Result<Token, LexError> {
