@@ -6,6 +6,7 @@ pub enum LexError {
     BlockCommentEof,
     UnexpectedEof(char),
     UnexpectedUnknown{ before: char, unexpected : char, loc : usize },
+    UnexpectedChar(char, usize),
 }
 
 impl std::fmt::Display for LexError {
@@ -15,6 +16,7 @@ impl std::fmt::Display for LexError {
             LexError::UnexpectedEof(c) => write!(f, "end of file encountered after '{}'", c),
             LexError::UnexpectedUnknown { before, unexpected, loc } 
                 => write!(f, "{} followed by unexpected {} at {}", before, unexpected, loc),
+            LexError::UnexpectedChar(c, n) => write!(f, "encountered unexpected {} at {}", c, n),
         }
     }
 }
@@ -126,7 +128,7 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
                 ts.push(num);
             },
             None => { break; },
-            _ => todo!(),
+            Some((n, x)) => { return Err(LexError::UnexpectedChar(x, n)); },
         }
     }
 
