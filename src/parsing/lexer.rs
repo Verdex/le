@@ -54,6 +54,11 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
             Some((_, c)) if c.is_whitespace() => {
                 left_over = whitespace(input)?;
             },
+            Some((n, c)) if c.is_alphabetic() || c == '_' => {
+                let (lo, num) = symbol(n, c, input)?;
+                left_over = lo;
+                ts.push(num);
+            },
             Some((_, '/')) => {
                 line_or_block_comment(input)?;
             },
@@ -173,6 +178,24 @@ fn number_or_right_arrow(first : usize, init : char, input : &mut I) -> Result<(
     }
 }
 
+fn symbol(first : usize, init : char, input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
+    let mut last = first;
+    let mut left_over = None;
+    let mut xs = vec![init];
+    loop { 
+        match input.next() {
+            Some((n, c)) if c.is_alphabetic() || c == '_' || c.is_digit(10) => {
+                last = n;
+                xs.push(c);
+            },
+            None => { break; },
+            x => { left_over = x; break; },
+        }
+    }
+
+    Ok((left_over, Token::Symbol(xs.into_iter().collect::<String>().into(), first, last)))
+}
+
 fn number(first : usize, init : (char, Option<(usize, char)>), input : &mut I) -> Result<(Option<(usize, char)>, Token), LexError> {
     let mut last = first;
     let mut left_over = None;
@@ -282,6 +305,13 @@ mod test {
         match input {
             Token::Number(x, _, _) => x.to_string(),
             _ => panic!("not a number"),
+        }
+    }
+
+    fn proj_sym(input : &Token) -> String {
+        match input {
+            Token::Symbol(x, _, _) => x.to_string(),
+            _ => panic!("not a symbol"),
         }
     }
 
@@ -419,5 +449,18 @@ mod test {
         a(&output[1], 1);
         a(&output[2], 10);
         a(&output[3], 100);
+    }
+
+    #[test]
+    fn should_lex_symbol() {
+        let mut input = "symbol. _symbol _1 Symbol_8".char_indices();
+        let output = lex(&mut input).unwrap();
+
+        assert_eq!(output.len(), 5);
+        assert_eq!(proj_sym(&output[0]), "symbol");
+        assert!(matches!(output[1], Token::Dot(_)));
+        assert_eq!(proj_sym(&output[2]), "_symbol");
+        assert_eq!(proj_sym(&output[3]), "_1");
+        assert_eq!(proj_sym(&output[4]), "Symbol_8");
     }
 }
