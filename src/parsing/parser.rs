@@ -23,7 +23,6 @@ impl std::fmt::Display for ParseError {
 
 impl Error for ParseError { }
 
-
 #[derive(Debug)]
 pub enum Type {
     Simple(Box<str>),
@@ -39,7 +38,13 @@ pub struct Slot {
 #[derive(Debug)]
 pub enum Ast {
     Number(Box<str>),
-    Type(Type),
+    Slot { name : Box<str>, ttype : Box<Ast> },
+    SimpleType(Box<str>),
+    IndexType{ name : Box<str>, params : Vec<Ast> },
+    Call { 
+        name : Box<str>,
+        inputs : Vec<Ast>,
+    },
     Function {
         name : Box<str>,
         parameters : Vec<Slot>,
@@ -59,6 +64,15 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, Box<dyn Error>> {
 
 fn init_rules() -> Rc<Rule<Token, Ast>> {
 
+    // TODO: generator: yield and halt
+
+    fn symbol(target : &Token, input : &'static str) -> bool {
+        match target {
+            Token::Symbol(name, _, _) if **name == *input => true,
+            _ => false,
+        }
+    }
+
     let number = Rule::new( "number"
                           , vec![Match::pred(|x, _| matches!(x, Token::Number(_, _, _)))]
                           , |mut results| match results.remove(0).unwrap().unwrap() {
@@ -66,7 +80,24 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                         _ => unreachable!(),
                           });
 
-    Rule::new("main", vec![Match::choice(&[&number])], |mut results| Ok(results.remove(0).unwrap_result().unwrap()))
+    let expr = Rule::new("expr", vec![Match::choice(&[&number])], |mut results| Ok(results.remove(0).unwrap_result().unwrap()));
+
+    let fun = Rule::new( "fun" 
+                       , vec![ Match::pred(|x, _| symbol(x, "fun"))
+                             , Match::pred(|x, _| matches!(x, Token::Symbol(_, _, _)))
+                             , Match::pred(|x, _| matches!(x, Token::LParen(_)))
+                             //,  TODO until RParen
+                             , Match::pred(|x, _| matches!(x, Token::RParen(_)))
+                             , Match::pred(|x, _| matches!(x, Token::RArrow(_, _)))
+                             // TODO type
+                             // TODO block
+                             ]
+
+                       , |mut results| Ok(Ast::Number("".into()))
+                        
+                       );
+
+    Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], |mut results| Ok(results.remove(0).unwrap_result().unwrap()))
 }
 
 
@@ -74,6 +105,14 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 mod test {
     use super::*;
     use super::super::lexer;
+
+    #[test]
+    fn should_parse_fun() {
+        let s = "fun name(x : T1, y : T2) -> T3 {
+            x
+        }";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
+    }
 
     #[test]
     fn should_parse_number() {
