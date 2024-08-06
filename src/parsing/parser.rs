@@ -37,6 +37,7 @@ pub struct Slot {
 
 #[derive(Debug)]
 pub enum Ast {
+    Never,
     Number(Box<str>),
     Slot { name : Box<str>, ttype : Box<Ast> },
     SimpleType(Box<str>),
@@ -73,14 +74,25 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
         }
     }
 
+    let end_paren = Rule::new( "end_paren"
+                             , vec![ Match::pred(|x, _| matches!(x, Token::RParen(_)))]
+                             , |_| Ok(Ast::Never)
+                             );
+
+    /*let fun_param = Rule::new( "fun_param"
+                             , vec![ Match::pred(|x, _| matches!(x, Token::Symbol(_, _, _)))
+                                   , Match::pred(|x, _| matches!(x, Token::Colon(_)))
+                                   , // TODO type 
+                                   ]
+                             );*/
+
     let number = Rule::new( "number"
                           , vec![Match::pred(|x, _| matches!(x, Token::Number(_, _, _)))]
                           , |mut results| match results.remove(0).unwrap().unwrap() {
                                         Token::Number(n, _, _) => Ok(Ast::Number(n.clone())),
                                         _ => unreachable!(),
                           });
-
-    let expr = Rule::new("expr", vec![Match::choice(&[&number])], |mut results| Ok(results.remove(0).unwrap_result().unwrap()));
+                        
 
     let fun = Rule::new( "fun" 
                        , vec![ Match::pred(|x, _| symbol(x, "fun"))
@@ -96,6 +108,8 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                        , |mut results| Ok(Ast::Number("".into()))
                         
                        );
+
+    let expr = Rule::new("expr", vec![Match::choice(&[&number])], |mut results| Ok(results.remove(0).unwrap_result().unwrap()));
 
     Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], |mut results| Ok(results.remove(0).unwrap_result().unwrap()))
 }
