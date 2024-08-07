@@ -67,12 +67,6 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     // TODO: generator: yield and halt
 
-    fn symbol(target : &Token, input : &'static str) -> bool {
-        match target {
-            Token::Symbol(name, _, _) if **name == *input => true,
-            _ => false,
-        }
-    }
 
     fn ret<'a>(mut results : Vec<Capture<'a, Token, Ast>>) -> Result<Ast, JerboaError> {
         Ok(results.remove(0).unwrap_result().unwrap())
@@ -96,6 +90,15 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     macro_rules! pred_match {
         ($p:pat) => { Match::pred(|x, _| matches!(x, $p)) }
+    }
+
+    macro_rules! is_keyword {
+        ($name:expr) => { Match::pred(|x, _| 
+            match x { 
+                Token::Symbol(name, _, _) if **name == *$name => true,
+                _ => false,
+            }) 
+        }
     }
 
     macro_rules! proj {
@@ -148,7 +151,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                         
 
     let fun = Rule::new( "fun" 
-                       , vec![ Match::pred(|x, _| symbol(x, "fun"))
+                       , vec![ is_keyword!("fun") 
                              , Match::pred(|x, _| matches!(x, Token::Symbol(_, _, _)))
                              , Match::pred(|x, _| matches!(x, Token::LParen(_)))
                              //,  TODO until RParen
