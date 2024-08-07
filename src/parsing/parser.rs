@@ -109,11 +109,15 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     let simple_type = Rule::new( "simple_type"
                                , vec![pred_match!(Token::Symbol(_, _, _))]
-                               , ret
+                               , |mut results| proj!( results.remove(0).unwrap().unwrap()
+                                                    , Token::Symbol(n, _, _)
+                                                    , Ok(Ast::SimpleType(n.clone()))
+                                                    )
                                );
+    // TODO: index type
 
     let ttype = Rule::new( "type"
-                         , vec![]
+                         , vec![Match::choice(&[&simple_type])]
                          , ret 
                          );
 
@@ -127,17 +131,11 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                    , Match::pred(|x, _| matches!(x, Token::Colon(_)))
                                    , Match::rule(&ttype) 
                                    ]
-                             /*, |mut results| {
-                                let name = results.remove(0);
-                                results.remove(0);
-                                let name = proj!(name.remove(0).unwrap().unwrap(), Token::Symbol(n, _, _), n.clone());
-                                let ttype = Box::new(*ttype.unwrap_result().unwrap());
-                                Ok(Ast::Slot { name, ttype })
-                             }*/
                              , transform!(name, _, ttype, {
-                                Ok(Ast::Never)
-                             })
-                             );
+                                    let name = proj!( name.unwrap().unwrap(), Token::Symbol(n, _, _), n.clone() );
+                                    let ttype = Box::new(ttype.unwrap_result().unwrap());
+                                    Ok(Ast::Slot { name, ttype })
+                             }));
 
     let number = Rule::new( "number"
                           , vec![Match::pred(|x, _| matches!(x, Token::Number(_, _, _)))]
@@ -166,7 +164,8 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     let expr = Rule::new("expr", vec![Match::choice(&[&number])], ret);
 
-    Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], ret)
+    //Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], ret)
+    fun_param
 }
 
 
@@ -174,6 +173,14 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 mod test {
     use super::*;
     use super::super::lexer;
+
+    #[test]
+    fn blarg() {
+        let mut s = "blah : SomeType1".char_indices();
+        let input = lexer::lex(&mut s).unwrap();
+        let output = parse(input).unwrap();
+        println!("{:?}", output);
+    }
 
     #[test]
     fn should_parse_fun() {
