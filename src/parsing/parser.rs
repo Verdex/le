@@ -78,6 +78,22 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
         Ok(results.remove(0).unwrap_result().unwrap())
     }
 
+    macro_rules! lets {
+        ($target:ident, $body:block) => { return $body; };
+        ($target:ident, $n:ident, $($rest:tt)*) => {
+            let $n = $target.remove(0);
+            lets!($target, $($rest)*);
+        };
+        ($target:ident, _, $($rest:tt)*) => {
+            $target.remove(0);
+            lets!($target, $($rest)*);
+        };
+    }
+
+    macro_rules! transform {
+        ($($input:tt)*) => { |mut results| { lets!(results, $($input)*); } }
+    }
+
     macro_rules! pred_match {
         ($p:pat) => { Match::pred(|x, _| matches!(x, $p)) }
     }
@@ -106,19 +122,31 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                              , |_| Ok(Ast::Never)
                              );
 
-    /*let fun_param = Rule::new( "fun_param"
+    let fun_param = Rule::new( "fun_param"
                              , vec![ Match::pred(|x, _| matches!(x, Token::Symbol(_, _, _)))
                                    , Match::pred(|x, _| matches!(x, Token::Colon(_)))
-                                   , // TODO type 
+                                   , Match::rule(&ttype) 
                                    ]
-                             );*/
+                             /*, |mut results| {
+                                let name = results.remove(0);
+                                results.remove(0);
+                                let name = proj!(name.remove(0).unwrap().unwrap(), Token::Symbol(n, _, _), n.clone());
+                                let ttype = Box::new(*ttype.unwrap_result().unwrap());
+                                Ok(Ast::Slot { name, ttype })
+                             }*/
+                             , transform!(name, _, ttype, {
+                                Ok(Ast::Never)
+                             })
+                             );
 
     let number = Rule::new( "number"
                           , vec![Match::pred(|x, _| matches!(x, Token::Number(_, _, _)))]
-                          , |mut results| match results.remove(0).unwrap().unwrap() {
-                                        Token::Number(n, _, _) => Ok(Ast::Number(n.clone())),
-                                        _ => unreachable!(),
-                          });
+                          , transform!(result, {
+                                proj!( result.unwrap().unwrap()
+                                     , Token::Number(n, _, _)
+                                     , Ok(Ast::Number(n.clone()))
+                                     )
+                          }));
                         
 
     let fun = Rule::new( "fun" 
