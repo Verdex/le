@@ -3,7 +3,7 @@ use std::error::Error;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use dealize::jerboa::{self, Rule, Match};
+use dealize::jerboa::{self, Rule, Match, Capture, JerboaError};
 
 use super::lexer::*;
 
@@ -74,6 +74,15 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
         }
     }
 
+    fn ret<'a>(mut results : Vec<Capture<'a, Token, Ast>>) -> Result<Ast, JerboaError> {
+        Ok(results.remove(0).unwrap_result().unwrap())
+    }
+
+    let ttype = Rule::new( "type"
+                         , vec![]
+                         , ret 
+                         );
+
     let end_paren = Rule::new( "end_paren"
                              , vec![ Match::pred(|x, _| matches!(x, Token::RParen(_)))]
                              , |_| Ok(Ast::Never)
@@ -109,9 +118,9 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                         
                        );
 
-    let expr = Rule::new("expr", vec![Match::choice(&[&number])], |mut results| Ok(results.remove(0).unwrap_result().unwrap()));
+    let expr = Rule::new("expr", vec![Match::choice(&[&number])], ret);
 
-    Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], |mut results| Ok(results.remove(0).unwrap_result().unwrap()))
+    Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], ret)
 }
 
 
