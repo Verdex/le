@@ -143,9 +143,19 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                     Ok(Ast::Slot { name, ttype })
                              }));
 
-    /*let fun_param_comma = Rule::new( "fun_param_comma" 
-                                   , vec![Match::rules]
-                                   );*/
+    let fun_param_comma = Rule::new( "fun_param_comma" 
+                                   , vec![ Match::rule(&fun_param)
+                                         , pred_match!(Token::Comma(_))
+                                         ]
+                                   , ret
+                                   ); 
+
+    let fun_param_r_paren = Rule::new( "fun_param_r_paren" 
+                                     , vec![ Match::rule(&fun_param)
+                                           , pred_match!(Token::RParen(_))
+                                           ]
+                                     , ret
+                                     ); 
 
     let number = Rule::new( "number"
                           , vec![pred_match!(Token::Number(_, _, _))]
@@ -161,8 +171,8 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                        , vec![ is_keyword!("fun") 
                              , pred_match!(Token::Symbol(_, _, _))
                              , pred_match!(Token::LParen(_))
-                             //,  TODO until RParen
-                             , pred_match!(Token::RParen(_))
+                             , Match::until(&fun_param_comma, &fun_param_r_paren)
+                             , Match::rule(&fun_param_r_paren)
                              , pred_match!(Token::RArrow(_, _))
                              // TODO type
                              // TODO block
@@ -174,8 +184,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     let expr = Rule::new("expr", vec![Match::choice(&[&number])], ret);
 
-    //Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], ret)
-    fun_param
+    Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], ret)
 }
 
 
@@ -186,7 +195,7 @@ mod test {
 
     #[test]
     fn blarg() {
-        let mut s = "blah : SomeType1".char_indices();
+        let mut s = "fun blarg(a : B, z : h)".char_indices();
         let input = lexer::lex(&mut s).unwrap();
         let output = parse(input).unwrap();
         println!("{:?}", output);
