@@ -127,11 +127,6 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                          , ret 
                          );
 
-    let end_paren = Rule::new( "end_paren"
-                             , vec![ pred_match!(Token::RParen(_)) ]
-                             , |_| Ok(Ast::Never)
-                             );
-
     let fun_param = Rule::new( "fun_param"
                              , vec![ pred_match!(Token::Symbol(_, _, _))
                                    , pred_match!(Token::Colon(_))
@@ -173,7 +168,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                              , pred_match!(Token::LParen(_))
                              , Match::until(&fun_param_comma, &fun_param_r_paren)
                              , Match::rule(&fun_param_r_paren)
-                             , pred_match!(Token::RArrow(_, _))
+                             //, pred_match!(Token::RArrow(_, _))
                              // TODO type
                              // TODO block
                              ]
