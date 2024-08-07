@@ -67,6 +67,9 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     // TODO: generator: yield and halt
 
+    // TODO: test that this function isn't being called for each parse invocation
+    // maybe with some sort of manual pause
+
 
     fn ret<'a>(mut results : Vec<Capture<'a, Token, Ast>>) -> Result<Ast, JerboaError> {
         Ok(results.remove(0).unwrap_result().unwrap())
