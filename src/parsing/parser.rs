@@ -128,13 +128,13 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                          );
 
     let end_paren = Rule::new( "end_paren"
-                             , vec![ Match::pred(|x, _| matches!(x, Token::RParen(_)))]
+                             , vec![ pred_match!(Token::RParen(_)) ]
                              , |_| Ok(Ast::Never)
                              );
 
     let fun_param = Rule::new( "fun_param"
-                             , vec![ Match::pred(|x, _| matches!(x, Token::Symbol(_, _, _)))
-                                   , Match::pred(|x, _| matches!(x, Token::Colon(_)))
+                             , vec![ pred_match!(Token::Symbol(_, _, _))
+                                   , pred_match!(Token::Colon(_))
                                    , Match::rule(&ttype) 
                                    ]
                              , transform!(name, _, ttype, {
@@ -143,8 +143,12 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                     Ok(Ast::Slot { name, ttype })
                              }));
 
+    /*let fun_param_comma = Rule::new( "fun_param_comma" 
+                                   , vec![Match::rules]
+                                   );*/
+
     let number = Rule::new( "number"
-                          , vec![Match::pred(|x, _| matches!(x, Token::Number(_, _, _)))]
+                          , vec![pred_match!(Token::Number(_, _, _))]
                           , transform!(result, {
                                 proj!( result.unwrap().unwrap()
                                      , Token::Number(n, _, _)
@@ -155,11 +159,11 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     let fun = Rule::new( "fun" 
                        , vec![ is_keyword!("fun") 
-                             , Match::pred(|x, _| matches!(x, Token::Symbol(_, _, _)))
-                             , Match::pred(|x, _| matches!(x, Token::LParen(_)))
+                             , pred_match!(Token::Symbol(_, _, _))
+                             , pred_match!(Token::LParen(_))
                              //,  TODO until RParen
-                             , Match::pred(|x, _| matches!(x, Token::RParen(_)))
-                             , Match::pred(|x, _| matches!(x, Token::RArrow(_, _)))
+                             , pred_match!(Token::RParen(_))
+                             , pred_match!(Token::RArrow(_, _))
                              // TODO type
                              // TODO block
                              ]
