@@ -78,6 +78,24 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
         Ok(results.remove(0).unwrap_result().unwrap())
     }
 
+    macro_rules! pred_match {
+        ($p:pat) => { Match::pred(|x, _| matches!(x, $p)) }
+    }
+
+    macro_rules! proj {
+        ($input:expr, $p:pat, $e:expr) => { 
+            match $input {
+                $p => $e,
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    let simple_type = Rule::new( "simple_type"
+                               , vec![pred_match!(Token::Symbol(_, _, _))]
+                               , ret
+                               );
+
     let ttype = Rule::new( "type"
                          , vec![]
                          , ret 
