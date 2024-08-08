@@ -168,8 +168,8 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                              , pred_match!(Token::LParen(_))
                              , Match::until(&fun_param_comma, &fun_param_r_paren)
                              , Match::rule(&fun_param_r_paren)
-                             //, pred_match!(Token::RArrow(_, _))
-                             // TODO type
+                             , pred_match!(Token::RArrow(_, _))
+                             , Match::rule(&ttype)
                              // TODO block
                              ]
 
@@ -190,7 +190,7 @@ mod test {
 
     #[test]
     fn blarg() {
-        let mut s = "fun blarg(a : B, z : h)".char_indices();
+        let mut s = "fun blarg(a : B, z : h) -> T".char_indices();
         let input = lexer::lex(&mut s).unwrap();
         let output = parse(input).unwrap();
         println!("{:?}", output);
