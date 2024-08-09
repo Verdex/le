@@ -4,8 +4,8 @@ version = 3
 
 [[package]]
 name = "dealize"
-version = "0.6.0"
-source = "git+https://www.github.com/verdex/dealize?tag=release-0.6.0#62dc20073764b31ab1978e7e68423d0319bc0ecf"
+version = "0.7.0"
+source = "git+https://www.github.com/verdex/dealize?tag=release-0.7.0#dd92865c70a34cb6831e066848362a9a33c1c84e"
 
 [[package]]
 name = "le"
