@@ -194,33 +194,34 @@ mod test {
     use super::super::lexer;
 
     #[test]
-    fn blarg() {
-        let mut s = "fun blarg(a : B, z : h) -> T".char_indices();
-        let input = lexer::lex(&mut s).unwrap();
+    fn should_parse_zero_param_fun() {
+        let s = "fun name() -> T3 { }";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
         let output = parse(input).unwrap();
-        println!("{:?}", output);
+    }
+
+    #[test]
+    fn should_parse_single_param_fun() {
+        let s = "fun name(x : T) -> T3 { }";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let output = parse(input).unwrap();
     }
 
     #[test]
     fn should_parse_fun() {
-        let s = "fun name(x : T1, y : T2) -> T3 {
-            x
-        }";
+        let s = "fun name(x : T1, y : T2) -> T3 { }";
         let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let output = parse(input).unwrap();
     }
 
     #[test]
     fn should_parse_number() {
         let input = lexer::lex(&mut "100".char_indices()).unwrap();
-        let output = parse(input).unwrap();
+        let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
-        if let Ast::Number(v) = &output[0] {
-            assert_eq!(*v, "100".into());
-        }
-        else {
-            assert!(false);
-        }
+        let output = proj!(output.remove(0), Ast::Number(v), v);
+        assert_eq!(output, "100".into());
     }
 
 }
