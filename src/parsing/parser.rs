@@ -63,6 +63,15 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, Box<dyn Error>> {
     Ok(RULE.with_borrow(|rule| jerboa::parse(&input, Rc::clone(rule)))?)
 }
 
+macro_rules! proj {
+    ($input:expr, $p:pat, $e:expr) => { 
+        match $input {
+            $p => $e,
+            _ => unreachable!(),
+        }
+    }
+}
+
 fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     // TODO: generator: yield and halt
@@ -101,15 +110,6 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                 Token::Symbol(name, _, _) if **name == *$name => true,
                 _ => false,
             }) 
-        }
-    }
-
-    macro_rules! proj {
-        ($input:expr, $p:pat, $e:expr) => { 
-            match $input {
-                $p => $e,
-                _ => unreachable!(),
-            }
         }
     }
 
