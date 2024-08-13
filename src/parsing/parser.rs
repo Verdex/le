@@ -24,18 +24,6 @@ impl std::fmt::Display for ParseError {
 impl Error for ParseError { }
 
 #[derive(Debug)]
-pub enum Type {
-    Simple(Box<str>),
-    Index(Box<str>, Vec<Type>),
-}
-
-#[derive(Debug)]
-pub struct Slot {
-    name : Box<str>,
-    ttype : Type,
-}
-
-#[derive(Debug)]
 pub enum Ast {
     Never,
     Number(Box<str>),
@@ -48,8 +36,8 @@ pub enum Ast {
     },
     Function {
         name : Box<str>,
-        parameters : Vec<Slot>,
-        return_type : Type,
+        parameters : Vec<Ast>,
+        return_type : Box<Ast>,
         body : Vec<Ast>,
     },
 }
