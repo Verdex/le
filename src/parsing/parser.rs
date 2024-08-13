@@ -138,19 +138,12 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                     Ok(Ast::Slot { name, ttype })
                              }));
 
-    let fun_param_comma = Rule::new( "fun_param_comma" 
-                                   , vec![ Match::rule(&fun_param)
-                                         , pred_match!(Token::Comma(_))
+    let comma_fun_param = Rule::new( "comma_fun_param" 
+                                   , vec![ pred_match!(Token::Comma(_))
+                                         , Match::rule(&fun_param)
                                          ]
-                                   , ret
+                                   , transform!(_, f, { Ok(f.unwrap_result().unwrap()) }) 
                                    ); 
-
-    let fun_param_r_paren = Rule::new( "fun_param_r_paren" 
-                                     , vec![ Match::rule(&fun_param)
-                                           , pred_match!(Token::RParen(_))
-                                           ]
-                                     , ret
-                                     ); 
 
     let number = Rule::new( "number"
                           , vec![pred_match!(Token::Number(_, _, _))]
@@ -171,12 +164,13 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                        , vec![ is_keyword!("fun") 
                              , pred_match!(Token::Symbol(_, _, _))
                              , pred_match!(Token::LParen(_))
-                             , Match::until(&fun_param_comma, &fun_param_r_paren)
-                             , Match::rule(&fun_param_r_paren) // TODO :  will just fun param + paren work
+                             , Match::option(&fun_param)
+                             , Match::list(&comma_fun_param)
+                             , pred_match!(Token::RParen(_))
                              , pred_match!(Token::RArrow(_, _))
                              , Match::rule(&ttype)
                              , pred_match!(Token::LCurl(_))
-                             , Match::rule(&top_level_redirect)
+                             , Match::list(&top_level_redirect)
                              , pred_match!(Token::RCurl(_))
                              ]
 
