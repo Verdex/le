@@ -162,24 +162,35 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                           }));
                         
 
+    let top_level_redirect = Rule::new( "top_level_redirect"
+                                      , vec![Match::late(0)]
+                                      , transform!(result, { Ok(result.unwrap_result().unwrap()) })
+                                      );
+
     let fun = Rule::new( "fun" 
                        , vec![ is_keyword!("fun") 
                              , pred_match!(Token::Symbol(_, _, _))
                              , pred_match!(Token::LParen(_))
                              , Match::until(&fun_param_comma, &fun_param_r_paren)
-                             , Match::rule(&fun_param_r_paren)
+                             , Match::rule(&fun_param_r_paren) // TODO :  will just fun param + paren work
                              , pred_match!(Token::RArrow(_, _))
                              , Match::rule(&ttype)
-                             // TODO block
+                             , pred_match!(Token::LCurl(_))
+                             , Match::rule(&top_level_redirect)
+                             , pred_match!(Token::RCurl(_))
                              ]
 
-                       , |mut results| Ok(Ast::Number("".into()))
+                       , |mut results| { println!("{:?}", results.remove(0).unwrap_result()); Ok(Ast::Number("".into())) }
                         
                        );
 
     let expr = Rule::new("expr", vec![Match::choice(&[&number])], ret);
 
-    Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], ret)
+    let top_level = Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], ret);
+
+    top_level_redirect.bind(&[&top_level]);
+
+    top_level
 }
 
 
