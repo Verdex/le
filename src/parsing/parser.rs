@@ -162,9 +162,21 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                              , pred_match!(Token::RCurl(_))
                              ]
 
-                       , |mut results| { println!("{:?}", results.remove(0).unwrap_result()); Ok(Ast::Number("".into())) }
-                        
-                       );
+                       , transform!(_, name, _, opt_param, list_param, _, _, ret_type, _, body, _, {
+
+                            let name = proj!(name.unwrap().unwrap(), Token::Symbol(n, _, _), n.clone());
+                            let opt_param = opt_param.unwrap_option().unwrap();
+                            let mut parameters = list_param.unwrap_list().unwrap();
+                            if opt_param.is_some() {
+                                parameters.insert(0, opt_param.unwrap());
+                            }
+
+                            let return_type = Box::new(ret_type.unwrap_result().unwrap());
+                            let body = body.unwrap_list().unwrap();
+
+                            Ok(Ast::Function { name, parameters, return_type, body })
+                       }));
+                       
 
     let expr = Rule::new("expr", vec![Match::choice(&[&number])], ret);
 
