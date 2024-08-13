@@ -197,21 +197,80 @@ mod test {
     fn should_parse_zero_param_fun() {
         let s = "fun name() -> T3 { }";
         let input = lexer::lex(&mut s.char_indices()).unwrap();
-        let output = parse(input).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+
+        let (name, params, ret_type, body) = proj!( output.remove(0)
+                                                  , Ast::Function { name, parameters, return_type, body }
+                                                  , (name, parameters, return_type, body)
+                                                  );
+        assert_eq!(name, "name".into());
+        assert_eq!(params.len(), 0);
+        assert_eq!(body.len(), 0);
+
+        let ret_type = proj!(*ret_type, Ast::SimpleType(n), n);
+        assert_eq!(ret_type, "T3".into());
     }
 
     #[test]
     fn should_parse_single_param_fun() {
         let s = "fun name(x : T) -> T3 { }";
         let input = lexer::lex(&mut s.char_indices()).unwrap();
-        let output = parse(input).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+
+        let (name, mut params, ret_type, body) = proj!( output.remove(0)
+                                                      , Ast::Function { name, parameters, return_type, body }
+                                                      , (name, parameters, return_type, body)
+                                                      );
+        assert_eq!(name, "name".into());
+        assert_eq!(params.len(), 1);
+
+        let (p_name, p_type) = proj!( params.remove(0)
+                                    , Ast::Slot{ name, ttype }
+                                    , (name, proj!(*ttype, Ast::SimpleType(n), n.clone()))
+                                    );
+        assert_eq!(p_name, "x".into());
+        assert_eq!(p_type, "T".into());
+
+        assert_eq!(body.len(), 0);
+
+        let ret_type = proj!(*ret_type, Ast::SimpleType(n), n);
+        assert_eq!(ret_type, "T3".into());
     }
 
     #[test]
     fn should_parse_fun() {
         let s = "fun name(x : T1, y : T2) -> T3 { }";
         let input = lexer::lex(&mut s.char_indices()).unwrap();
-        let output = parse(input).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+
+        let (name, mut params, ret_type, body) = proj!( output.remove(0)
+                                                      , Ast::Function { name, parameters, return_type, body }
+                                                      , (name, parameters, return_type, body)
+                                                      );
+        assert_eq!(name, "name".into());
+        assert_eq!(params.len(), 2);
+
+        let (p_name, p_type) = proj!( params.remove(0)
+                                    , Ast::Slot{ name, ttype }
+                                    , (name, proj!(*ttype, Ast::SimpleType(n), n.clone()))
+                                    );
+        assert_eq!(p_name, "x".into());
+        assert_eq!(p_type, "T1".into());
+
+        let (p_name, p_type) = proj!( params.remove(0)
+                                    , Ast::Slot{ name, ttype }
+                                    , (name, proj!(*ttype, Ast::SimpleType(n), n.clone()))
+                                    );
+        assert_eq!(p_name, "y".into());
+        assert_eq!(p_type, "T2".into());
+
+        assert_eq!(body.len(), 0);
+
+        let ret_type = proj!(*ret_type, Ast::SimpleType(n), n);
+        assert_eq!(ret_type, "T3".into());
     }
 
     #[test]
