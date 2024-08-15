@@ -100,40 +100,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
     // TODO: test that this function isn't being called for each parse invocation
     // maybe with some sort of manual pause
 
-
-    let simple_type = Rule::new( "simple_type"
-                               , vec![pred_match!(Token::Symbol(_, _, _))]
-                               , |mut results| proj!( results.remove(0).unwrap().unwrap()
-                                                    , Token::Symbol(n, _, _)
-                                                    , Ok(Ast::SimpleType(n.clone()))
-                                                    )
-                               );
-
-    let ttype_redirect = Rule::new( "type_redirect"
-                                  , vec![Match::late(0)]
-                                  , transform!(result, { Ok(result.unwrap_result().unwrap()) })
-                                  );
-    
-    let comma_ttype = Rule::new( "comma_type" 
-                               , vec![pred_match!(Token::Comma(_)), Match::rule(&ttype_redirect)]
-                               , transform!(_, ttype, {
-                                    Ok(ttype.unwrap_result().unwrap())     
-                               }));
-
-    let index_type = Rule::new( "index_type"
-                              , vec![ Match::rule(&simple_type)
-                                    , pred_match!(Token::LAngle(_))
-                                    , pred_match!(Token::RAngle(_))
-                                    ]
-                              , ret // TODO
-                              );
-
-    let ttype = Rule::new( "type"
-                         , vec![Match::choice(&[&simple_type])]
-                         , ret 
-                         );
-    
-    ttype_redirect.bind(&[&ttype]);
+    let ttype = ttype_rule();
 
     let fun_param = Rule::new( "fun_param"
                              , vec![ pred_match!(Token::Symbol(_, _, _))
@@ -207,6 +174,44 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
     top_level
 }
 
+fn ttype_rule() -> Rc<Rule<Token, Ast>> {
+
+    let simple_type = Rule::new( "simple_type"
+                               , vec![pred_match!(Token::Symbol(_, _, _))]
+                               , |mut results| proj!( results.remove(0).unwrap().unwrap()
+                                                    , Token::Symbol(n, _, _)
+                                                    , Ok(Ast::SimpleType(n.clone()))
+                                                    )
+                               );
+
+    let ttype_redirect = Rule::new( "type_redirect"
+                                  , vec![Match::late(0)]
+                                  , transform!(result, { Ok(result.unwrap_result().unwrap()) })
+                                  );
+    
+    let comma_ttype = Rule::new( "comma_type" 
+                               , vec![pred_match!(Token::Comma(_)), Match::rule(&ttype_redirect)]
+                               , transform!(_, ttype, {
+                                    Ok(ttype.unwrap_result().unwrap())     
+                               }));
+
+    let index_type = Rule::new( "index_type"
+                              , vec![ Match::rule(&simple_type)
+                                    , pred_match!(Token::LAngle(_))
+                                    , pred_match!(Token::RAngle(_))
+                                    ]
+                              , ret // TODO
+                              );
+
+    let ttype = Rule::new( "type"
+                         , vec![Match::choice(&[&simple_type])]
+                         , ret 
+                         );
+    
+    ttype_redirect.bind(&[&ttype]);
+
+    ttype
+}
 
 #[cfg(test)] 
 mod test {
