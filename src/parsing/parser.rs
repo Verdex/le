@@ -51,12 +51,45 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, Box<dyn Error>> {
     Ok(RULE.with_borrow(|rule| jerboa::parse(&input, Rc::clone(rule)))?)
 }
 
+fn ret<'a>(mut results : Vec<Capture<'a, Token, Ast>>) -> Result<Ast, JerboaError> {
+    Ok(results.remove(0).unwrap_result().unwrap())
+}
+
 macro_rules! proj {
     ($input:expr, $p:pat, $e:expr) => { 
         match $input {
             $p => $e,
             _ => unreachable!(),
         }
+    }
+}
+
+macro_rules! lets {
+    ($target:ident, $body:block) => { return $body; };
+    ($target:ident, $n:ident, $($rest:tt)*) => {
+        let $n = $target.remove(0);
+        lets!($target, $($rest)*);
+    };
+    ($target:ident, _, $($rest:tt)*) => {
+        $target.remove(0);
+        lets!($target, $($rest)*);
+    };
+}
+
+macro_rules! transform {
+    ($($input:tt)*) => { |mut results| { lets!(results, $($input)*); } }
+}
+
+macro_rules! pred_match {
+    ($p:pat) => { Match::pred(|x, _| matches!(x, $p)) }
+}
+
+macro_rules! is_keyword {
+    ($name:expr) => { Match::pred(|x, _| 
+        match x { 
+            Token::Symbol(name, _, _) if **name == *$name => true,
+            _ => false,
+        }) 
     }
 }
 
@@ -67,39 +100,6 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
     // TODO: test that this function isn't being called for each parse invocation
     // maybe with some sort of manual pause
 
-
-    fn ret<'a>(mut results : Vec<Capture<'a, Token, Ast>>) -> Result<Ast, JerboaError> {
-        Ok(results.remove(0).unwrap_result().unwrap())
-    }
-
-    macro_rules! lets {
-        ($target:ident, $body:block) => { return $body; };
-        ($target:ident, $n:ident, $($rest:tt)*) => {
-            let $n = $target.remove(0);
-            lets!($target, $($rest)*);
-        };
-        ($target:ident, _, $($rest:tt)*) => {
-            $target.remove(0);
-            lets!($target, $($rest)*);
-        };
-    }
-
-    macro_rules! transform {
-        ($($input:tt)*) => { |mut results| { lets!(results, $($input)*); } }
-    }
-
-    macro_rules! pred_match {
-        ($p:pat) => { Match::pred(|x, _| matches!(x, $p)) }
-    }
-
-    macro_rules! is_keyword {
-        ($name:expr) => { Match::pred(|x, _| 
-            match x { 
-                Token::Symbol(name, _, _) if **name == *$name => true,
-                _ => false,
-            }) 
-        }
-    }
 
     let simple_type = Rule::new( "simple_type"
                                , vec![pred_match!(Token::Symbol(_, _, _))]
