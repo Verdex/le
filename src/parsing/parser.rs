@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use dealize::jerboa::{self, Rule, Match, Capture, JerboaError};
+use dealize::pattern::*;
 
 use super::lexer::*;
 
@@ -23,9 +24,8 @@ impl std::fmt::Display for ParseError {
 
 impl Error for ParseError { }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Ast {
-    Never,
     Number(Box<str>),
     Slot { name : Box<str>, ttype : Box<Ast> },
     SimpleType(Box<str>),
@@ -42,6 +42,16 @@ pub enum Ast {
     },
 }
 
+impl Matchable for Ast {
+    type Atom = ();
+
+    fn kind<'a>(&'a self) -> MatchKind<'a, Self> {
+        match self {
+            Ast::Number(s) => MatchKind::Cons("number", vec![]),
+            _ => todo!(),
+        }
+    }
+}
 
 thread_local!{
     static RULE : RefCell<Rc<Rule<Token, Ast>>> = RefCell::new(init_rules());
