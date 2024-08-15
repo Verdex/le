@@ -47,7 +47,11 @@ impl Matchable for Ast {
 
     fn kind<'a>(&'a self) -> MatchKind<'a, Self> {
         match self {
-            Ast::Number(s) => MatchKind::Cons("number", vec![]),
+            Ast::Number(_) => MatchKind::Cons("number", vec![]),
+            Ast::Slot { ttype, .. } => MatchKind::Cons("slot", vec![ttype]),
+            Ast::SimpleType(_) => MatchKind::Cons("simple-type", vec![]),
+            Ast::IndexType { params, .. } => MatchKind::Cons("index-type", params.iter().collect()),
+            Ast::Call { inputs, .. } => MatchKind::Cons("call", inputs.iter().collect()),
             _ => todo!(),
         }
     }
