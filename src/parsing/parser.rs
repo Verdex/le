@@ -108,12 +108,32 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                                     , Ok(Ast::SimpleType(n.clone()))
                                                     )
                                );
-    // TODO: index type
+
+    let ttype_redirect = Rule::new( "type_redirect"
+                                  , vec![Match::late(0)]
+                                  , transform!(result, { Ok(result.unwrap_result().unwrap()) })
+                                  );
+    
+    let comma_ttype = Rule::new( "comma_type" 
+                               , vec![pred_match!(Token::Comma(_)), Match::rule(&ttype_redirect)]
+                               , transform!(_, ttype, {
+                                    Ok(ttype.unwrap_result().unwrap())     
+                               }));
+
+    let index_type = Rule::new( "index_type"
+                              , vec![ Match::rule(&simple_type)
+                                    , pred_match!(Token::LAngle(_))
+                                    , pred_match!(Token::RAngle(_))
+                                    ]
+                              , ret // TODO
+                              );
 
     let ttype = Rule::new( "type"
                          , vec![Match::choice(&[&simple_type])]
                          , ret 
                          );
+    
+    ttype_redirect.bind(&[&ttype]);
 
     let fun_param = Rule::new( "fun_param"
                              , vec![ pred_match!(Token::Symbol(_, _, _))
