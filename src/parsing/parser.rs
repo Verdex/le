@@ -113,12 +113,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                     Ok(Ast::Slot { name, ttype })
                              }));
 
-    let comma_fun_param = Rule::new( "comma_fun_param" 
-                                   , vec![ pred_match!(Token::Comma(_))
-                                         , Match::rule(&fun_param)
-                                         ]
-                                   , transform!(_, f, { Ok(f.unwrap_result().unwrap()) }) 
-                                   ); 
+    let comma_fun_param = comma_gen( "comma_fun_param", Match::rule(&fun_param) );
 
     let number = Rule::new( "number"
                           , vec![pred_match!(Token::Number(_, _, _))]
@@ -189,11 +184,7 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
                                   , transform!(result, { Ok(result.unwrap_result().unwrap()) })
                                   );
     
-    let comma_ttype = Rule::new( "comma_type" 
-                               , vec![pred_match!(Token::Comma(_)), Match::rule(&ttype_redirect)]
-                               , transform!(_, ttype, {
-                                    Ok(ttype.unwrap_result().unwrap())     
-                               }));
+    let comma_ttype = comma_gen("comma_type", Match::rule(&ttype_redirect));
 
     let index_type = Rule::new( "index_type"
                               , vec![ Match::rule(&simple_type)
@@ -211,6 +202,14 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
     ttype_redirect.bind(&[&ttype]);
 
     ttype
+}
+
+fn comma_gen(name : &'static str, m : Match<Token, Ast>) -> Rc<Rule<Token, Ast>> {
+    Rule::new( name
+             , vec![pred_match!(Token::Comma(_)), m]
+             , transform!(_, x, {
+                Ok(x.unwrap_result().unwrap())     
+             }))
 }
 
 #[cfg(test)] 
