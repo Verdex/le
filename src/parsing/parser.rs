@@ -228,6 +228,9 @@ mod test {
     use super::*;
     use super::super::lexer;
 
+    // TODO: index type test
+    // TODO: top level items defined in function test
+
     #[test]
     fn should_parse_zero_param_fun() {
         let s = "fun name() -> T3 { }";
