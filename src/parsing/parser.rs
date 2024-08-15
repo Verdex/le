@@ -187,15 +187,24 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
     let comma_ttype = comma_gen("comma_type", Match::rule(&ttype_redirect));
 
     let index_type = Rule::new( "index_type"
-                              , vec![ Match::rule(&simple_type)
+                              , vec![ pred_match!(Token::Symbol(_, _, _)) 
                                     , pred_match!(Token::LAngle(_))
+                                    , Match::option(&comma_ttype)
+                                    , Match::list(&comma_ttype)
                                     , pred_match!(Token::RAngle(_))
                                     ]
-                              , ret // TODO
-                              );
+                              , transform!( name, opt_param, list_param, {
+                                    let name = proj!(name.unwrap().unwrap(), Token::Symbol(n, _, _), n.clone());
+                                    let opt_param = opt_param.unwrap_option().unwrap();
+                                    let mut params = list_param.unwrap_list().unwrap();
+                                    if opt_param.is_some() {
+                                        params.insert(0, opt_param.unwrap());
+                                    }
+                                    Ok(Ast::IndexType{ name, params })
+                              }));
 
     let ttype = Rule::new( "type"
-                         , vec![Match::choice(&[&simple_type])]
+                         , vec![Match::choice(&[&index_type, &simple_type])]
                          , ret 
                          );
     
