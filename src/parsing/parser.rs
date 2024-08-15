@@ -170,6 +170,8 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 }
 
 fn ttype_rule() -> Rc<Rule<Token, Ast>> {
+    // Note:  Arrow types are an option, but just doing Fun< ... > is going to
+    // be just as easy and doesn't require a bunch of special handling.
 
     let simple_type = Rule::new( "simple_type"
                                , vec![pred_match!(Token::Symbol(_, _, _))]
