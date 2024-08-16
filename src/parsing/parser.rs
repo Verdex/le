@@ -29,7 +29,7 @@ pub enum Ast {
     Number(Box<str>),
     Symbol(Box<str>),
     Slot { name : Box<Ast>, ttype : Box<Ast> },
-    SimpleType(Box<str>),
+    SimpleType(Box<Ast>),
     IndexType{ name : Box<Ast>, params : Box<Ast> },
     Call { 
         name : Box<Ast>,
@@ -50,10 +50,10 @@ impl Matchable for Ast {
     fn kind<'a>(&'a self) -> MatchKind<'a, Self> {
         match self {
             Ast::Number(_) => MatchKind::Cons("number", vec![]),
-            Ast::Slot { ttype, .. } => MatchKind::Cons("slot", vec![ttype]),
-            Ast::SimpleType(_) => MatchKind::Cons("simple-type", vec![]),
-            Ast::IndexType { params, .. } => MatchKind::Cons("index-type", vec![params]),
-            Ast::Call { inputs, .. } => MatchKind::Cons("call", vec![inputs]),
+            Ast::Slot { name, ttype } => MatchKind::Cons("slot", vec![&*name, ttype]),
+            Ast::SimpleType(name) => MatchKind::Cons("simple-type", vec![&*name]),
+            Ast::IndexType { name, params } => MatchKind::Cons("index-type", vec![&*name, params]),
+            Ast::Call { name, inputs } => MatchKind::Cons("call", vec![&*name, inputs]),
             _ => todo!(),
         }
     }
@@ -192,11 +192,13 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
 
     let simple_type = Rule::new( "simple_type"
                                , vec![pred_match!(Token::Symbol(_, _, _))]
-                               , |mut results| proj!( results.remove(0).unwrap().unwrap()
+                               , transform!( name, {
+                                    let name = proj!( name.unwrap().unwrap()
                                                     , Token::Symbol(n, _, _)
-                                                    , Ok(Ast::SimpleType(n.clone()))
-                                                    )
-                               );
+                                                    , Box::new(Ast::Symbol(n.clone()))
+                                                    );
+                                    Ok(Ast::SimpleType(name))
+                               }));
 
     let ttype_redirect = Rule::new( "type_redirect"
                                   , vec![Match::late(0)]
@@ -277,7 +279,7 @@ mod test {
         let body = proj!(*body, Ast::SyntaxList(x), x);
         assert_eq!(body.len(), 0);
 
-        let ret_type = proj!(*ret_type, Ast::SimpleType(n), n);
+        let ret_type = proj!(*ret_type, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x));
         assert_eq!(ret_type, "T3".into());
     }
 
@@ -300,7 +302,7 @@ mod test {
 
         let (p_name, p_type) = proj!( params.remove(0)
                                     , Ast::Slot{ name, ttype }
-                                    , (name, proj!(*ttype, Ast::SimpleType(n), n.clone()))
+                                    , (name, proj!(*ttype, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x)))
                                     );
         let p_name = proj!(*p_name, Ast::Symbol(x), x);
         assert_eq!(p_name, "x".into());
@@ -309,7 +311,7 @@ mod test {
         let body = proj!(*body, Ast::SyntaxList(x), x);
         assert_eq!(body.len(), 0);
 
-        let ret_type = proj!(*ret_type, Ast::SimpleType(n), n);
+        let ret_type = proj!(*ret_type, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x));
         assert_eq!(ret_type, "T3".into());
     }
 
@@ -332,7 +334,7 @@ mod test {
 
         let (p_name, p_type) = proj!( params.remove(0)
                                     , Ast::Slot{ name, ttype }
-                                    , (name, proj!(*ttype, Ast::SimpleType(n), n.clone()))
+                                    , (name, proj!(*ttype, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x.clone())))
                                     );
         let p_name = proj!(*p_name, Ast::Symbol(x), x);
         assert_eq!(p_name, "x".into());
@@ -340,7 +342,7 @@ mod test {
 
         let (p_name, p_type) = proj!( params.remove(0)
                                     , Ast::Slot{ name, ttype }
-                                    , (name, proj!(*ttype, Ast::SimpleType(n), n.clone()))
+                                    , (name, proj!(*ttype, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x.clone())))
                                     );
 
         let p_name = proj!(*p_name, Ast::Symbol(x), x);
@@ -350,7 +352,7 @@ mod test {
         let body = proj!(*body, Ast::SyntaxList(x), x);
         assert_eq!(body.len(), 0);
 
-        let ret_type = proj!(*ret_type, Ast::SimpleType(n), n);
+        let ret_type = proj!(*ret_type, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x.clone()));
         assert_eq!(ret_type, "T3".into());
     }
 
