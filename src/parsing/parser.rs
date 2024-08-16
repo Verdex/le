@@ -287,37 +287,24 @@ mod test {
     }
 
     #[test]
-    fn should_parse_single_param_fun() {
+    fn should_parse_single_param_fun2() {
         let s = "fun name(x : T) -> T3 { }";
         let input = lexer::lex(&mut s.char_indices()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
-        let (name, params, ret_type, body) = proj!( output.remove(0)
-                                                  , Ast::Function { name, params, return_type, body }
-                                                  , (name, params, return_type, body)
-                                                  );
-        let name = proj!(*name, Ast::Symbol(x), x);
-        assert_eq!(name, "name".into());
+        let output = output.remove(0);
 
-        let mut params = proj!(*params, Ast::SyntaxList(x), x);
-        assert_eq!(params.len(), 1);
+        let pattern = cons("function", &[ atom("name".into())
+                                        , exact_list(&[cons("slot", &[atom("x".into()), cons("simple-type", &[atom("T".into())])])])
+                                        , cons("simple-type", &[atom("T3".into())])
+                                        , exact_list(&[])
+                                        ]);
+        let mut results = find(pattern, &output).collect::<Vec<_>>();
 
-        let (p_name, p_type) = proj!( params.remove(0)
-                                    , Ast::Slot{ name, ttype }
-                                    , (name, proj!(*ttype, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x)))
-                                    );
-        let p_name = proj!(*p_name, Ast::Symbol(x), x);
-        assert_eq!(p_name, "x".into());
-        assert_eq!(p_type, "T".into());
-
-        let body = proj!(*body, Ast::SyntaxList(x), x);
-        assert_eq!(body.len(), 0);
-
-        let ret_type = proj!(*ret_type, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x));
-        assert_eq!(ret_type, "T3".into());
+        assert_eq!(results.len(), 1);
     }
-
+    
     #[test]
     fn should_parse_fun() {
         let s = "fun name(x : T1, y : T2) -> T3 { }";
@@ -325,38 +312,18 @@ mod test {
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
-        let (name, params, ret_type, body) = proj!( output.remove(0)
-                                                  , Ast::Function { name, params, return_type, body }
-                                                  , (name, params, return_type, body)
-                                                  );
-        let name = proj!(*name, Ast::Symbol(x), x);
-        assert_eq!(name, "name".into());
+        let output = output.remove(0);
 
-        let mut params = proj!( *params, Ast::SyntaxList(x), x);
-        assert_eq!(params.len(), 2);
+        let pattern = cons("function", &[ atom("name".into())
+                                        , exact_list(&[ cons("slot", &[atom("x".into()), cons("simple-type", &[atom("T1".into())])])
+                                                      , cons("slot", &[atom("y".into()), cons("simple-type", &[atom("T2".into())])])
+                                                      ])
+                                        , cons("simple-type", &[atom("T3".into())])
+                                        , exact_list(&[])
+                                        ]);
+        let mut results = find(pattern, &output).collect::<Vec<_>>();
 
-        let (p_name, p_type) = proj!( params.remove(0)
-                                    , Ast::Slot{ name, ttype }
-                                    , (name, proj!(*ttype, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x.clone())))
-                                    );
-        let p_name = proj!(*p_name, Ast::Symbol(x), x);
-        assert_eq!(p_name, "x".into());
-        assert_eq!(p_type, "T1".into());
-
-        let (p_name, p_type) = proj!( params.remove(0)
-                                    , Ast::Slot{ name, ttype }
-                                    , (name, proj!(*ttype, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x.clone())))
-                                    );
-
-        let p_name = proj!(*p_name, Ast::Symbol(x), x);
-        assert_eq!(p_name, "y".into());
-        assert_eq!(p_type, "T2".into());
-
-        let body = proj!(*body, Ast::SyntaxList(x), x);
-        assert_eq!(body.len(), 0);
-
-        let ret_type = proj!(*ret_type, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x.clone()));
-        assert_eq!(ret_type, "T3".into());
+        assert_eq!(results.len(), 1);
     }
 
     #[test]
