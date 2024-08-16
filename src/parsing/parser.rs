@@ -257,11 +257,15 @@ fn comma_list_gen(name : &'static str, rule : &Rc<Rule<Token, Ast>>) -> Rc<Rule<
 
 #[cfg(test)] 
 mod test {
+    use std::collections::HashMap;
+
     use super::*;
     use super::super::lexer;
 
     // TODO: index type test
     // TODO: top level items defined in function test
+
+    // TODO: let results = results.remove(0).into_iter().collect::<HashMap<Box<str>, &Ast>>();
 
     #[test]
     fn should_parse_zero_param_fun() {
@@ -270,21 +274,16 @@ mod test {
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
-        let (name, params, ret_type, body) = proj!( output.remove(0)
-                                                  , Ast::Function { name, params, return_type, body }
-                                                  , (name, params, return_type, body)
-                                                  );
-        let name = proj!(*name, Ast::Symbol(x), x);
-        assert_eq!(name, "name".into());
+        let output = output.remove(0);
 
-        let params = proj!(*params, Ast::SyntaxList(x), x);
-        assert_eq!(params.len(), 0);
-
-        let body = proj!(*body, Ast::SyntaxList(x), x);
-        assert_eq!(body.len(), 0);
-
-        let ret_type = proj!(*ret_type, Ast::SimpleType(n), proj!(*n, Ast::Symbol(x), x));
-        assert_eq!(ret_type, "T3".into());
+        let pattern = cons("function", &[ atom("name".into())
+                                        , exact_list(&[])
+                                        , cons("simple-type", &[atom("T3".into())])
+                                        , exact_list(&[])
+                                        ]);
+        let mut results = find(pattern, &output).collect::<Vec<_>>();
+        
+        assert_eq!(results.len(), 1);
     }
 
     #[test]
