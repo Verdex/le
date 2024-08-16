@@ -217,7 +217,7 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
                                     , Match::rule(&type_list)
                                     , pred_match!(Token::RAngle(_))
                                     ]
-                              , transform!( name, params, {
+                              , transform!( name, _, params, {
                                     let name = proj!( name.unwrap().unwrap()
                                                     , Token::Symbol(n, _, _)
                                                     , Box::new(Ast::Symbol(n.clone()))
@@ -262,10 +262,56 @@ mod test {
     use super::*;
     use super::super::lexer;
 
-    // TODO: index type test
     // TODO: top level items defined in function test
 
     // TODO: let results = results.remove(0).into_iter().collect::<HashMap<Box<str>, &Ast>>();
+
+    #[test]
+    fn should_parse_fun_with_complex_index_type() {
+        let s = "fun name() -> T3<T1<T4>, T2, T5> { }";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+
+        let output = output.remove(0);
+
+        let first_pattern = cons("index-type", &[atom("T1".into()), exact_list(&[cons("simple-type", &[atom("T4".into())])])]);
+        let second_pattern = cons("simple-type", &[atom("T2".into())]);
+        let third_pattern = cons("simple-type", &[atom("T5".into())]);
+
+        let pattern = cons("function", &[ atom("name".into())
+                                        , exact_list(&[])
+                                        , cons("index-type", 
+                                            &[ atom("T3".into())
+                                             , exact_list(&[ first_pattern, second_pattern, third_pattern ])
+                                             ])
+                                        , exact_list(&[])
+                                        ]);
+        let mut results = find(pattern, &output).collect::<Vec<_>>();
+        
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn should_parse_fun_with_index_type() {
+        let s = "fun name() -> T3<T1> { }";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+
+        let output = output.remove(0);
+
+        let pattern = cons("function", &[ atom("name".into())
+                                        , exact_list(&[])
+                                        , cons("index-type", &[ atom("T3".into())
+                                                              , exact_list(&[cons("simple-type", &[atom("T1".into())])])
+                                                              ])
+                                        , exact_list(&[])
+                                        ]);
+        let mut results = find(pattern, &output).collect::<Vec<_>>();
+        
+        assert_eq!(results.len(), 1);
+    }
 
     #[test]
     fn should_parse_zero_param_fun() {
