@@ -128,7 +128,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                     Ok(Ast::Slot { name, ttype })
                              }));
 
-    let comma_fun_param = comma_gen( "comma_fun_param", Match::rule(&fun_param) );
+    let param_list = comma_list_gen("param_list", &fun_param);
 
     let number = Rule::new( "number"
                           , vec![pred_match!(Token::Number(_, _, _))]
@@ -149,8 +149,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                        , vec![ is_keyword!("fun") 
                              , pred_match!(Token::Symbol(_, _, _))
                              , pred_match!(Token::LParen(_))
-                             , Match::option(&fun_param)
-                             , Match::list(&comma_fun_param)
+                             , Match::rule(&param_list)
                              , pred_match!(Token::RParen(_))
                              , pred_match!(Token::RArrow(_, _))
                              , Match::rule(&ttype)
@@ -159,19 +158,15 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                              , pred_match!(Token::RCurl(_))
                              ]
 
-                       , transform!(_, name, _, opt_param, list_param, _, _, ret_type, _, body, _, {
+                       , transform!(_, name, _, params, _, _, ret_type, _, body, _, {
 
                             let name = proj!(name.unwrap().unwrap(), Token::Symbol(n, _, _), n.clone());
-                            let opt_param = opt_param.unwrap_option().unwrap();
-                            let mut parameters = list_param.unwrap_list().unwrap();
-                            if opt_param.is_some() {
-                                parameters.insert(0, opt_param.unwrap());
-                            }
+                            let params = Box::new(params.unwrap_result().unwrap());
 
                             let return_type = Box::new(ret_type.unwrap_result().unwrap());
                             let body = body.unwrap_list().unwrap();
 
-                            Ok(Ast::Function { name, parameters, return_type, body })
+                            Ok(Ast::Function { name, params, return_type, body })
                        }));
                        
 
@@ -202,6 +197,7 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
                                   );
     
     let comma_ttype = comma_gen("comma_type", Match::rule(&ttype_redirect));
+    //let type_list = comma_list_gen("type_list", &ttype_redirect);
 
     let index_type = Rule::new( "index_type"
                               , vec![ pred_match!(Token::Symbol(_, _, _)) 
@@ -273,10 +269,12 @@ mod test {
         assert_eq!(output.len(), 1);
 
         let (name, params, ret_type, body) = proj!( output.remove(0)
-                                                  , Ast::Function { name, parameters, return_type, body }
-                                                  , (name, parameters, return_type, body)
+                                                  , Ast::Function { name, params, return_type, body }
+                                                  , (name, params, return_type, body)
                                                   );
         assert_eq!(name, "name".into());
+
+        let params = proj!(*params, Ast::SyntaxList(x), x);
         assert_eq!(params.len(), 0);
         assert_eq!(body.len(), 0);
 
@@ -291,11 +289,13 @@ mod test {
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
-        let (name, mut params, ret_type, body) = proj!( output.remove(0)
-                                                      , Ast::Function { name, parameters, return_type, body }
-                                                      , (name, parameters, return_type, body)
-                                                      );
+        let (name, params, ret_type, body) = proj!( output.remove(0)
+                                                  , Ast::Function { name, params, return_type, body }
+                                                  , (name, params, return_type, body)
+                                                  );
         assert_eq!(name, "name".into());
+
+        let mut params = proj!(*params, Ast::SyntaxList(x), x);
         assert_eq!(params.len(), 1);
 
         let (p_name, p_type) = proj!( params.remove(0)
@@ -318,11 +318,13 @@ mod test {
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
-        let (name, mut params, ret_type, body) = proj!( output.remove(0)
-                                                      , Ast::Function { name, parameters, return_type, body }
-                                                      , (name, parameters, return_type, body)
-                                                      );
+        let (name, params, ret_type, body) = proj!( output.remove(0)
+                                                  , Ast::Function { name, params, return_type, body }
+                                                  , (name, params, return_type, body)
+                                                  );
         assert_eq!(name, "name".into());
+
+        let mut params = proj!( *params, Ast::SyntaxList(x), x);
         assert_eq!(params.len(), 2);
 
         let (p_name, p_type) = proj!( params.remove(0)
