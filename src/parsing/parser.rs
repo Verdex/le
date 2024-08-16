@@ -29,7 +29,7 @@ pub enum Ast {
     Number(Box<str>),
     Slot { name : Box<str>, ttype : Box<Ast> },
     SimpleType(Box<str>),
-    IndexType{ name : Box<str>, params : Vec<Ast> },
+    IndexType{ name : Box<str>, params : Box<Ast> },
     Call { 
         name : Box<str>,
         inputs : Box<Ast>,
@@ -196,23 +196,17 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
                                   , transform!(result, { Ok(result.unwrap_result().unwrap()) })
                                   );
     
-    let comma_ttype = comma_gen("comma_type", Match::rule(&ttype_redirect));
-    //let type_list = comma_list_gen("type_list", &ttype_redirect);
+    let type_list = comma_list_gen("type_list", &ttype_redirect);
 
     let index_type = Rule::new( "index_type"
                               , vec![ pred_match!(Token::Symbol(_, _, _)) 
                                     , pred_match!(Token::LAngle(_))
-                                    , Match::option(&comma_ttype)
-                                    , Match::list(&comma_ttype)
+                                    , Match::rule(&type_list)
                                     , pred_match!(Token::RAngle(_))
                                     ]
-                              , transform!( name, opt_param, list_param, {
+                              , transform!( name, params, {
                                     let name = proj!(name.unwrap().unwrap(), Token::Symbol(n, _, _), n.clone());
-                                    let opt_param = opt_param.unwrap_option().unwrap();
-                                    let mut params = list_param.unwrap_list().unwrap();
-                                    if opt_param.is_some() {
-                                        params.insert(0, opt_param.unwrap());
-                                    }
+                                    let params = Box::new(params.unwrap_result().unwrap());
                                     Ok(Ast::IndexType{ name, params })
                               }));
 
