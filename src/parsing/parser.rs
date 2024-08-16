@@ -26,7 +26,7 @@ impl Error for ParseError { }
 
 #[derive(Debug, PartialEq)]
 pub enum Ast {
-    Number(Box<str>),
+    Number(Box<str>), // TODO : should probably be a symbol instead of str
     Symbol(Box<str>),
     Slot { name : Box<Ast>, ttype : Box<Ast> },
     SimpleType(Box<Ast>),
