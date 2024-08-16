@@ -36,10 +36,11 @@ pub enum Ast {
     },
     Function {
         name : Box<str>,
-        parameters : Vec<Ast>,
+        params : Box<Ast>,
         return_type : Box<Ast>,
         body : Vec<Ast>,
     },
+    SyntaxList(Vec<Ast>),
 }
 
 impl Matchable for Ast {
@@ -227,6 +228,25 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
     ttype_redirect.bind(&[&ttype]);
 
     ttype
+}
+
+fn comma_list_gen(name : &'static str, rule : &Rc<Rule<Token, Ast>>) -> Rc<Rule<Token, Ast>> {
+    let comma_rule = Rule::new( format!("comma_{}", name) 
+                              , vec![pred_match!(Token::Comma(_)), Match::rule(rule)]
+                              , transform!(_, x, {
+                                    Ok(x.unwrap_result().unwrap())     
+                              }));
+    
+    Rule::new( name
+             , vec![Match::option(rule), Match::list(&comma_rule)]
+             , transform!(opt, list, {
+                    let opt = opt.unwrap_option().unwrap();
+                    let mut list = list.unwrap_list().unwrap();
+                    if opt.is_some() {
+                        list.insert(0, opt.unwrap());
+                    }
+                    Ok(Ast::SyntaxList(list))
+             }))
 }
 
 fn comma_gen(name : &'static str, m : Match<Token, Ast>) -> Rc<Rule<Token, Ast>> {
