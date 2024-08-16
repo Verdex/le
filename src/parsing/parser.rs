@@ -27,15 +27,16 @@ impl Error for ParseError { }
 #[derive(Debug, PartialEq)]
 pub enum Ast {
     Number(Box<str>),
-    Slot { name : Box<str>, ttype : Box<Ast> },
+    Symbol(Box<str>),
+    Slot { name : Box<Ast>, ttype : Box<Ast> },
     SimpleType(Box<str>),
-    IndexType{ name : Box<str>, params : Box<Ast> },
+    IndexType{ name : Box<Ast>, params : Box<Ast> },
     Call { 
-        name : Box<str>,
+        name : Box<Ast>,
         inputs : Box<Ast>,
     },
     Function {
-        name : Box<str>,
+        name : Box<Ast>,
         params : Box<Ast>,
         return_type : Box<Ast>,
         body : Box<Ast>,
@@ -123,7 +124,10 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                    , Match::rule(&ttype) 
                                    ]
                              , transform!(name, _, ttype, {
-                                    let name = proj!( name.unwrap().unwrap(), Token::Symbol(n, _, _), n.clone() );
+                                    let name = proj!( name.unwrap().unwrap()
+                                                    , Token::Symbol(n, _, _)
+                                                    , Box::new(Ast::Symbol(n.clone()))
+                                                    );
                                     let ttype = Box::new(ttype.unwrap_result().unwrap());
                                     Ok(Ast::Slot { name, ttype })
                              }));
@@ -160,7 +164,10 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
                        , transform!(_, name, _, params, _, _, ret_type, _, body, _, {
 
-                            let name = proj!(name.unwrap().unwrap(), Token::Symbol(n, _, _), n.clone());
+                            let name = proj!( name.unwrap().unwrap()
+                                            , Token::Symbol(n, _, _)
+                                            , Box::new(Ast::Symbol(n.clone()))
+                                            );
                             let params = Box::new(params.unwrap_result().unwrap());
 
                             let return_type = Box::new(ret_type.unwrap_result().unwrap());
@@ -205,7 +212,10 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
                                     , pred_match!(Token::RAngle(_))
                                     ]
                               , transform!( name, params, {
-                                    let name = proj!(name.unwrap().unwrap(), Token::Symbol(n, _, _), n.clone());
+                                    let name = proj!( name.unwrap().unwrap()
+                                                    , Token::Symbol(n, _, _)
+                                                    , Box::new(Ast::Symbol(n.clone()))
+                                                    );
                                     let params = Box::new(params.unwrap_result().unwrap());
                                     Ok(Ast::IndexType{ name, params })
                               }));
@@ -258,6 +268,7 @@ mod test {
                                                   , Ast::Function { name, params, return_type, body }
                                                   , (name, params, return_type, body)
                                                   );
+        let name = proj!(*name, Ast::Symbol(x), x);
         assert_eq!(name, "name".into());
 
         let params = proj!(*params, Ast::SyntaxList(x), x);
@@ -281,6 +292,7 @@ mod test {
                                                   , Ast::Function { name, params, return_type, body }
                                                   , (name, params, return_type, body)
                                                   );
+        let name = proj!(*name, Ast::Symbol(x), x);
         assert_eq!(name, "name".into());
 
         let mut params = proj!(*params, Ast::SyntaxList(x), x);
@@ -290,6 +302,7 @@ mod test {
                                     , Ast::Slot{ name, ttype }
                                     , (name, proj!(*ttype, Ast::SimpleType(n), n.clone()))
                                     );
+        let p_name = proj!(*p_name, Ast::Symbol(x), x);
         assert_eq!(p_name, "x".into());
         assert_eq!(p_type, "T".into());
 
@@ -311,6 +324,7 @@ mod test {
                                                   , Ast::Function { name, params, return_type, body }
                                                   , (name, params, return_type, body)
                                                   );
+        let name = proj!(*name, Ast::Symbol(x), x);
         assert_eq!(name, "name".into());
 
         let mut params = proj!( *params, Ast::SyntaxList(x), x);
@@ -320,6 +334,7 @@ mod test {
                                     , Ast::Slot{ name, ttype }
                                     , (name, proj!(*ttype, Ast::SimpleType(n), n.clone()))
                                     );
+        let p_name = proj!(*p_name, Ast::Symbol(x), x);
         assert_eq!(p_name, "x".into());
         assert_eq!(p_type, "T1".into());
 
@@ -327,6 +342,8 @@ mod test {
                                     , Ast::Slot{ name, ttype }
                                     , (name, proj!(*ttype, Ast::SimpleType(n), n.clone()))
                                     );
+
+        let p_name = proj!(*p_name, Ast::Symbol(x), x);
         assert_eq!(p_name, "y".into());
         assert_eq!(p_type, "T2".into());
 
