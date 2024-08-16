@@ -45,15 +45,19 @@ pub enum Ast {
 }
 
 impl Matchable for Ast {
-    type Atom = ();
+    type Atom = Box<str>;
 
     fn kind<'a>(&'a self) -> MatchKind<'a, Self> {
         match self {
+            Ast::Symbol(n) => MatchKind::Atom(n),
+            Ast::SyntaxList(ls) => MatchKind::List(ls),
             Ast::Number(_) => MatchKind::Cons("number", vec![]),
             Ast::Slot { name, ttype } => MatchKind::Cons("slot", vec![&*name, ttype]),
             Ast::SimpleType(name) => MatchKind::Cons("simple-type", vec![&*name]),
             Ast::IndexType { name, params } => MatchKind::Cons("index-type", vec![&*name, params]),
             Ast::Call { name, inputs } => MatchKind::Cons("call", vec![&*name, inputs]),
+            Ast::Function { name, params, return_type, body } => 
+                MatchKind::Cons("function", vec![name, params, return_type, body]),
             _ => todo!(),
         }
     }
