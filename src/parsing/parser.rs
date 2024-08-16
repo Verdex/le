@@ -239,14 +239,6 @@ fn comma_list_gen(name : &'static str, rule : &Rc<Rule<Token, Ast>>) -> Rc<Rule<
              }))
 }
 
-fn comma_gen(name : &'static str, m : Match<Token, Ast>) -> Rc<Rule<Token, Ast>> {
-    Rule::new( name
-             , vec![pred_match!(Token::Comma(_)), m]
-             , transform!(_, x, {
-                Ok(x.unwrap_result().unwrap())     
-             }))
-}
-
 #[cfg(test)] 
 mod test {
     use super::*;
