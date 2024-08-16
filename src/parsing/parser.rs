@@ -32,13 +32,13 @@ pub enum Ast {
     IndexType{ name : Box<str>, params : Vec<Ast> },
     Call { 
         name : Box<str>,
-        inputs : Vec<Ast>,
+        inputs : Box<Ast>,
     },
     Function {
         name : Box<str>,
         params : Box<Ast>,
         return_type : Box<Ast>,
-        body : Vec<Ast>,
+        body : Box<Ast>,
     },
     SyntaxList(Vec<Ast>),
 }
@@ -164,7 +164,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                             let params = Box::new(params.unwrap_result().unwrap());
 
                             let return_type = Box::new(ret_type.unwrap_result().unwrap());
-                            let body = body.unwrap_list().unwrap();
+                            let body = Box::new(Ast::SyntaxList(body.unwrap_list().unwrap()));
 
                             Ok(Ast::Function { name, params, return_type, body })
                        }));
@@ -276,6 +276,8 @@ mod test {
 
         let params = proj!(*params, Ast::SyntaxList(x), x);
         assert_eq!(params.len(), 0);
+
+        let body = proj!(*body, Ast::SyntaxList(x), x);
         assert_eq!(body.len(), 0);
 
         let ret_type = proj!(*ret_type, Ast::SimpleType(n), n);
@@ -305,6 +307,7 @@ mod test {
         assert_eq!(p_name, "x".into());
         assert_eq!(p_type, "T".into());
 
+        let body = proj!(*body, Ast::SyntaxList(x), x);
         assert_eq!(body.len(), 0);
 
         let ret_type = proj!(*ret_type, Ast::SimpleType(n), n);
@@ -341,6 +344,7 @@ mod test {
         assert_eq!(p_name, "y".into());
         assert_eq!(p_type, "T2".into());
 
+        let body = proj!(*body, Ast::SyntaxList(x), x);
         assert_eq!(body.len(), 0);
 
         let ret_type = proj!(*ret_type, Ast::SimpleType(n), n);
