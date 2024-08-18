@@ -121,7 +121,13 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
     // maybe with some sort of manual pause
 
     let ttype = ttype_rule();
+    let expr = expr_rule(); 
 
+    let top_level_redirect = Rule::new( "top_level_redirect"
+                                      , vec![Match::late(0)]
+                                      , transform!(result, { Ok(result.unwrap_result().unwrap()) })
+                                      );
+    
     let fun_param = Rule::new( "fun_param"
                              , vec![ pred_match!(Token::Symbol(_, _, _))
                                    , pred_match!(Token::Colon(_))
@@ -135,15 +141,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                     let ttype = Box::new(ttype.unwrap_result().unwrap());
                                     Ok(Ast::Slot { name, ttype })
                              }));
-
-    let expr = expr_rule(); 
-
     let param_list = comma_list_gen("param_list", &fun_param);
-
-    let top_level_redirect = Rule::new( "top_level_redirect"
-                                      , vec![Match::late(0)]
-                                      , transform!(result, { Ok(result.unwrap_result().unwrap()) })
-                                      );
 
     let fun = Rule::new( "fun" 
                        , vec![ is_keyword!("fun") 
