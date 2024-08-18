@@ -136,17 +136,9 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                     Ok(Ast::Slot { name, ttype })
                              }));
 
-    let param_list = comma_list_gen("param_list", &fun_param);
+    let expr = expr_rule(); 
 
-    let number = Rule::new( "number"
-                          , vec![pred_match!(Token::Number(_, _, _))]
-                          , transform!(result, {
-                                proj!( result.unwrap().unwrap()
-                                     , Token::Number(n, _, _)
-                                     , Ok(Ast::Number(n.clone()))
-                                     )
-                          }));
-                        
+    let param_list = comma_list_gen("param_list", &fun_param);
 
     let top_level_redirect = Rule::new( "top_level_redirect"
                                       , vec![Match::late(0)]
@@ -181,13 +173,26 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                        }));
                        
 
-    let expr = Rule::new("expr", vec![Match::choice(&[&number])], ret);
 
     let top_level = Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], ret);
 
     top_level_redirect.bind(&[&top_level]);
 
     top_level
+}
+
+fn expr_rule() -> Rc<Rule<Token, Ast>> {
+    let number = Rule::new( "number"
+                          , vec![pred_match!(Token::Number(_, _, _))]
+                          , transform!(result, {
+                                proj!( result.unwrap().unwrap()
+                                     , Token::Number(n, _, _)
+                                     , Ok(Ast::Number(n.clone()))
+                                     )
+                          }));
+                        
+
+    Rule::new("expr", vec![Match::choice(&[&number])], ret)
 }
 
 fn ttype_rule() -> Rc<Rule<Token, Ast>> {
