@@ -32,7 +32,7 @@ pub enum Ast {
     SimpleType(Box<Ast>),
     IndexType{ name : Box<Ast>, params : Box<Ast> },
     Call { 
-        name : Box<Ast>,
+        func_expr : Box<Ast>,
         inputs : Box<Ast>,
     },
     Function {
@@ -55,7 +55,7 @@ impl Matchable for Ast {
             Ast::Slot { name, ttype } => MatchKind::Cons("slot", vec![&*name, ttype]),
             Ast::SimpleType(name) => MatchKind::Cons("simple-type", vec![&*name]),
             Ast::IndexType { name, params } => MatchKind::Cons("index-type", vec![&*name, params]),
-            Ast::Call { name, inputs } => MatchKind::Cons("call", vec![&*name, inputs]),
+            Ast::Call { func_expr, inputs } => MatchKind::Cons("call", vec![&*func_expr, inputs]),
             Ast::Function { name, params, return_type, body } => 
                 MatchKind::Cons("function", vec![name, params, return_type, body]),
             _ => todo!(),
@@ -180,6 +180,10 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 }
 
 fn expr_rule() -> Rc<Rule<Token, Ast>> {
+    let redirect = Rule::new( "expr_redirect", vec![Match::late(0)], transform!(result, { Ok(result.unwrap_result().unwrap()) }));
+
+    let redirect_list = comma_list_gen("redirect_list", &redirect);
+
     let number = Rule::new( "number"
                           , vec![pred_match!(Token::Number(_, _, _))]
                           , transform!(result, {
@@ -188,9 +192,48 @@ fn expr_rule() -> Rc<Rule<Token, Ast>> {
                                      , Ok(Ast::Number(n.clone()))
                                      )
                           }));
-                        
+     
+    let expr = Rule::new("expr", vec![Match::choice(&[&number])], ret);
 
-    Rule::new("expr", vec![Match::choice(&[&number])], ret)
+    let call_followup = Rule::new( "call_followup"
+                                 , vec![ pred_match!(Token::LParen(_))
+                                       , Match::rule(&redirect_list)
+                                       , pred_match!(Token::RParen(_))
+                                       ]
+                                 , transform!(_, l, _, { 
+                                    Ok(Ast::SyntaxList(vec![Ast::Symbol("call".into()), l.unwrap_result().unwrap()]))
+                                }));
+
+    let followup_choice = Rule::new("followup_choice", 
+        vec![Match::choice(&[&call_followup])], 
+        transform!(result, { Ok(result.unwrap_result().unwrap())}));
+
+    let expr_with_followup = 
+        Rule::new( "expr_with_followup"
+                 , vec![ Match::rule(&expr)
+                       , Match::option(&followup_choice)
+                       ]
+                 , transform!(expr, follow, {
+                    let expr = expr.unwrap_result().unwrap();
+                    let follow = follow.unwrap_option().unwrap();
+                    match follow { 
+                        Some(follow) => { 
+                            let mut follow = proj!(follow, Ast::SyntaxList(ls), ls);
+                            let t = proj!(follow.remove(0), Ast::Symbol(n), n.clone());
+                            let follow = Box::new(follow.remove(0));
+                            match &*t {
+                                "call" => 
+                                    Ok(Ast::Call { func_expr: Box::new(expr), inputs: follow }),
+                                _ => todo!(),
+                            }
+                        },
+                        None => Ok(expr),
+                    }
+                 }));
+
+    redirect.bind(&[&expr_with_followup]);
+
+    expr_with_followup
 }
 
 fn ttype_rule() -> Rc<Rule<Token, Ast>> {
@@ -336,7 +379,7 @@ mod test {
     }
 
     #[test]
-    fn should_parse_single_param_fun2() {
+    fn should_parse_single_param_fun() {
         let s = "fun name(x : T) -> T3 { }";
         let input = lexer::lex(&mut s.char_indices()).unwrap();
         let mut output = parse(input).unwrap();
