@@ -432,6 +432,22 @@ mod test {
     }
 
     #[test]
+    fn should_parse_variable() {
+        let s = "var";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+
+        let output = output.remove(0);
+
+        let pattern = cons("variable", &[atom("var".into())]);
+
+        let results = find(pattern, &output).collect::<Vec<_>>();
+
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
     fn should_parse_fun_call_with_complex_param() {
         let s = "blah(ah(b()), c, d()(e, i))()";
         let input = lexer::lex(&mut s.char_indices()).unwrap();
@@ -449,22 +465,71 @@ mod test {
 
     #[test]
     fn should_parse_fun_call_with_multiple_param() {
+        let s = "blah(val, two, other)";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
 
+        let output = output.remove(0);
+
+        let param_1 = cons("variable", &[atom("val".into())]);
+        let param_2 = cons("variable", &[atom("two".into())]);
+        let param_3 = cons("variable", &[atom("other".into())]);
+        let pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[param_1, param_2, param_3])]);
+
+        let results = find(pattern, &output).collect::<Vec<_>>();
+
+        assert_eq!(results.len(), 1);
     }
 
     #[test]
     fn should_parse_fun_call_with_param() {
+        let s = "blah(val)";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
 
+        let output = output.remove(0);
+
+        let param_pattern = cons("variable", &[atom("val".into())]);
+        let pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[param_pattern])]);
+
+        let results = find(pattern, &output).collect::<Vec<_>>();
+
+        assert_eq!(results.len(), 1);
     }
 
     #[test]
     fn should_parse_fun_call_call() {
+        let s = "blah()()";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
 
+        let output = output.remove(0);
+
+        let inner_pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[])]);
+        let pattern = cons("call", &[inner_pattern, exact_list(&[])]);
+
+        let results = find(pattern, &output).collect::<Vec<_>>();
+
+        assert_eq!(results.len(), 1);
     }
 
     #[test]
     fn should_parse_fun_call() {
+        let s = "blah()";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
 
+        let output = output.remove(0);
+
+        let pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[])]);
+
+        let results = find(pattern, &output).collect::<Vec<_>>();
+
+        assert_eq!(results.len(), 1);
     }
 
     #[test]
