@@ -31,6 +31,7 @@ pub enum Ast {
     Slot { name : Box<Ast>, ttype : Box<Ast> },
     SimpleType(Box<Ast>),
     IndexType{ name : Box<Ast>, params : Box<Ast> },
+    Variable(Box<Ast>),
     Call { 
         func_expr : Box<Ast>,
         inputs : Box<Ast>,
@@ -55,6 +56,7 @@ impl Matchable for Ast {
             Ast::Slot { name, ttype } => MatchKind::Cons("slot", vec![&*name, ttype]),
             Ast::SimpleType(name) => MatchKind::Cons("simple-type", vec![&*name]),
             Ast::IndexType { name, params } => MatchKind::Cons("index-type", vec![&*name, params]),
+            Ast::Variable(name) => MatchKind::Cons("variable", vec![&*name]),
             Ast::Call { func_expr, inputs } => MatchKind::Cons("call", vec![&*func_expr, inputs]),
             Ast::Function { name, params, return_type, body } => 
                 MatchKind::Cons("function", vec![name, params, return_type, body]),
@@ -192,8 +194,20 @@ fn expr_rule() -> Rc<Rule<Token, Ast>> {
                                      , Ok(Ast::Number(n.clone()))
                                      )
                           }));
+
+    let variable = Rule::new( "variable"
+                            , vec![pred_match!(Token::Symbol(_, _, _))]
+                            , transform!(x, { 
+                                proj!( x.unwrap().unwrap()
+                                     , Token::Symbol(n, _, _)
+                                     , Ok(Ast::Variable(Box::new(Ast::Symbol(n.clone()))))
+                                     )
+                            }));
      
-    let expr = Rule::new("expr", vec![Match::choice(&[&number])], ret);
+    let expr = Rule::new("expr", vec![
+        Match::choice(&[ &number
+                       , &variable
+                       ])], ret);
 
     let call_followup = Rule::new( "call_followup"
                                  , vec![ pred_match!(Token::LParen(_))
@@ -332,7 +346,7 @@ mod test {
                                              ])
                                         , exact_list(&[])
                                         ]);
-        let mut results = find(pattern, &output).collect::<Vec<_>>();
+        let results = find(pattern, &output).collect::<Vec<_>>();
         
         assert_eq!(results.len(), 1);
     }
@@ -353,7 +367,7 @@ mod test {
                                                               ])
                                         , exact_list(&[])
                                         ]);
-        let mut results = find(pattern, &output).collect::<Vec<_>>();
+        let results = find(pattern, &output).collect::<Vec<_>>();
         
         assert_eq!(results.len(), 1);
     }
@@ -372,7 +386,7 @@ mod test {
                                         , cons("simple-type", &[atom("T3".into())])
                                         , exact_list(&[])
                                         ]);
-        let mut results = find(pattern, &output).collect::<Vec<_>>();
+        let results = find(pattern, &output).collect::<Vec<_>>();
         
         assert_eq!(results.len(), 1);
     }
@@ -391,7 +405,7 @@ mod test {
                                         , cons("simple-type", &[atom("T3".into())])
                                         , exact_list(&[])
                                         ]);
-        let mut results = find(pattern, &output).collect::<Vec<_>>();
+        let results = find(pattern, &output).collect::<Vec<_>>();
 
         assert_eq!(results.len(), 1);
     }
@@ -412,9 +426,45 @@ mod test {
                                         , cons("simple-type", &[atom("T3".into())])
                                         , exact_list(&[])
                                         ]);
-        let mut results = find(pattern, &output).collect::<Vec<_>>();
+        let results = find(pattern, &output).collect::<Vec<_>>();
 
         assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn should_parse_fun_call_with_complex_param() {
+        let s = "blah(ah(b()), c, d()(e, i))()";
+        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let mut output = parse(input).unwrap();
+        assert_eq!(output.len(), 1);
+
+        let output = output.remove(0);
+
+        let pattern = cons("call", &[wild()]);
+
+        let results = find(pattern, &output).collect::<Vec<_>>();
+
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn should_parse_fun_call_with_multiple_param() {
+
+    }
+
+    #[test]
+    fn should_parse_fun_call_with_param() {
+
+    }
+
+    #[test]
+    fn should_parse_fun_call_call() {
+
+    }
+
+    #[test]
+    fn should_parse_fun_call() {
+
     }
 
     #[test]
