@@ -456,7 +456,7 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("call", &[wild()]);
+        let pattern = cons("call", &[wild(), wild()]);
 
         let results = find(pattern, &output).collect::<Vec<_>>();
 
