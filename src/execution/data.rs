@@ -1,6 +1,7 @@
 
 use std::rc::Rc;
 
+/*
 pub enum Instr {
     Goto(usize),
     Ret,
@@ -28,3 +29,5 @@ pub enum Ir {
 pub enum VmData {
 
 }
+
+*/
