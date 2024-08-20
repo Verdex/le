@@ -211,24 +211,23 @@ fn expr_rule() -> Rc<Rule<Token, Ast>> {
     let expr_with_followup = 
         Rule::new( "expr_with_followup"
                  , vec![ Match::rule(&expr)
-                       , Match::option(&followup_choice)
+                       , Match::list(&followup_choice)
                        ]
                  , transform!(expr, follow, {
-                    let expr = expr.unwrap_result().unwrap();
-                    let follow = follow.unwrap_option().unwrap();
-                    match follow { 
-                        Some(follow) => { 
-                            let mut follow = proj!(follow, Ast::SyntaxList(ls), ls);
-                            let t = proj!(follow.remove(0), Ast::Symbol(n), n.clone());
-                            let follow = Box::new(follow.remove(0));
-                            match &*t {
-                                "call" => 
-                                    Ok(Ast::Call { func_expr: Box::new(expr), inputs: follow }),
-                                _ => todo!(),
-                            }
-                        },
-                        None => Ok(expr),
+                    let mut expr = expr.unwrap_result().unwrap();
+
+                    for item in follow.unwrap_list().unwrap() {
+                        let mut item = proj!(item, Ast::SyntaxList(ls), ls);
+                        let t = proj!(item.remove(0), Ast::Symbol(n), n.clone());
+                        let follow = Box::new(item.remove(0));
+                        match &*t {
+                            "call" => 
+                                expr = Ast::Call { func_expr: Box::new(expr), inputs: follow },
+                            _ => todo!(),
+                        }
                     }
+
+                    Ok(expr)
                  }));
 
     redirect.bind(&[&expr_with_followup]);
