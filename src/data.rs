@@ -65,6 +65,39 @@ impl Matchable for Ast {
 }
 
 #[derive(Debug)]
+pub enum Type {
+    Simple(Box<str>),
+    Index { name : Box<str>, params : Vec<Type> },
+}
+
+#[derive(Debug)]
+pub enum Val {
+    Num(f64),
+    RetReg,
+}
+
+#[derive(Debug)] 
+pub enum Sym {
+    Name(Box<str>),
+    Gen(Box<str>, usize),
+}
+
+#[derive(Debug)]
+pub enum FunAddr { 
+    Global(Box<str>),
+    GlobalGen(Box<str>, usize),
+    Var(Box<str>),
+    VarGen(usize),
+}
+
+#[derive(Debug)]
+pub enum Stmt {
+    SetNameVar(Box<str>, Val),
+    SetAnonVar(usize, Val),
+    Call(FuncAddr, Vec<Box<str>>),
+}
+
+#[derive(Debug)]
 pub enum Linear {
-    
+    Fun { name : Sym, ttype : Type, return_type : Type, body : Vec<Stmt> }
 }
