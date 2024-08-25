@@ -1,7 +1,9 @@
 
-use std::rc::Rc;
 
 /*
+
+use std::rc::Rc;
+
 pub enum Instr {
     Goto(usize),
     Ret,
