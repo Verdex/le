@@ -6,7 +6,7 @@ use std::rc::Rc;
 use dealize::jerboa::{self, Rule, Match, Capture, JerboaError};
 use dealize::pattern::*;
 
-use super::lexer::*;
+use crate::data::Token;
 
 #[derive(Debug)]
 enum ParseError {
