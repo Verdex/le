@@ -48,10 +48,8 @@ enum FunName {
 #[derive(Debug)]
 enum T {
     Fun(FunName, Vec<Statement>),
-    Expr(Vec<Statement>),
 }
 
-// TODO: typecheck that there is only one top level "expression" that gets compiled into execute
 
 pub fn to_interpreter(ast : Vec<Ast>) -> Result<Program, ()> {
     let mut fun_map : HashMap<FunName, usize> = HashMap::new();
