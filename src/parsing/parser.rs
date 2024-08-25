@@ -276,6 +276,8 @@ fn comma_list_gen(name : &'static str, rule : &Rc<Rule<Token, Ast>>) -> Rc<Rule<
 mod test {
     use std::collections::HashMap;
 
+    use dealize::pattern::*;
+
     use super::*;
     use super::super::lexer;
 
