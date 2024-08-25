@@ -85,9 +85,9 @@ pub enum Sym {
 #[derive(Debug)]
 pub enum FunAddr { 
     Global(Box<str>),
-    GlobalGen(Box<str>, usize),
+    Gen(Box<str>, usize),
     Var(Box<str>),
-    VarGen(usize),
+    Anon(usize),
 }
 
 #[derive(Debug)]
