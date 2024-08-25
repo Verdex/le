@@ -1,7 +1,7 @@
 
 use std::collections::HashMap;
 
-use crate::parsing::parser::Ast;
+use crate::data::Ast;
 
 #[derive(Debug)]
 pub enum Value {
