@@ -1,6 +1,7 @@
 
 
-use crate::data::{Linear, Ast};
+use crate::data::{Ast, Linear, Type, Val, Sym, FunAddr, Stmt};
+
 
 pub fn linearize(ast : Vec<Ast>) -> Result<Vec<Linear>, ()> {
     ast.into_iter().map(to_linear).collect()
@@ -14,8 +15,8 @@ fn to_linear(ast : Ast) -> Result<Linear, ()> {
     match ast {
         Ast::Number(s) => todo!(),
         Ast::Variable(sym) => todo!(),
-        // func_expr : symbol
-        // inputs : syntax list
+        // func_expr : expr
+        // inputs : syntax list of expr
         Ast::Call { func_expr, inputs } => todo!(),
 
         // name : symbol
@@ -25,4 +26,8 @@ fn to_linear(ast : Ast) -> Result<Linear, ()> {
         Ast::Function { name, params, return_type, body } => todo!(),
         _ => Err(()), // TODO: LinearError => unsupported top level
     }
+}
+
+fn call(func_expr : Ast, inputs : Ast) -> Vec<Stmt> {
+    todo!()
 }
