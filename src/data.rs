@@ -66,5 +66,4 @@ impl Matchable for Ast {
 
 #[derive(Debug)]
 pub enum Linear {
-
 }
