@@ -60,7 +60,11 @@ impl Matchable for Ast {
             Ast::Call { func_expr, inputs } => MatchKind::Cons("call", vec![&*func_expr, inputs]),
             Ast::Function { name, params, return_type, body } => 
                 MatchKind::Cons("function", vec![name, params, return_type, body]),
-            _ => todo!(),
         }
     }
+}
+
+#[derive(Debug)]
+pub enum Linear {
+
 }
