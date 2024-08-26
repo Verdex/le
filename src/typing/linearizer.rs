@@ -34,6 +34,9 @@ fn to_linear(ast : Ast) -> Result<Linear, ()> {
 fn expr(e : Ast) -> (usize, Vec<Stmt>) {
 
     todo!()
+    /*match e { 
+        Ast::Var(sym) => 
+    }*/
 }
 
 // func_expr : expr

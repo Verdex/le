@@ -8,7 +8,6 @@ mod eval;
 use std::io::{self, Write};
 
 pub fn main() {
-
     loop {
         print!("> ");
         io::stdout().flush();
