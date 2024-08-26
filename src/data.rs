@@ -99,5 +99,5 @@ pub enum Stmt {
 
 #[derive(Debug)]
 pub enum Linear {
-    Fun { name : Sym, ttype : Type, return_type : Type, body : Vec<Stmt> }
+    Fun { name : Sym, params : Vec<(Box<str>, Type)>, return_type : Type, body : Vec<Stmt> }
 }
