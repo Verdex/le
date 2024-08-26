@@ -15,8 +15,6 @@ fn to_linear(ast : Ast) -> Result<Linear, ()> {
     match ast {
         Ast::Number(s) => todo!(),
         Ast::Variable(sym) => todo!(),
-        // func_expr : expr
-        // inputs : syntax list of expr
         Ast::Call { func_expr, inputs } => {
             let c = call(*func_expr, *inputs);
             Ok(repl_main_fun_wrapper(c))
@@ -31,6 +29,15 @@ fn to_linear(ast : Ast) -> Result<Linear, ()> {
     }
 }
 
+// return type : usize is the anon local slot that this expr 
+// is being placed at
+fn expr(e : Ast) -> (usize, Vec<Stmt>) {
+
+    todo!()
+}
+
+// func_expr : expr
+// inputs : syntax list of expr
 fn call(func_expr : Ast, inputs : Ast) -> Vec<Stmt> {
     todo!()
 }
@@ -43,15 +50,14 @@ fn repl_main_fun_wrapper(body : Vec<Stmt>) -> Linear {
                 }
 }
 
+fn anon() -> usize {
+    static mut index : usize = 0;
+    unsafe { let v = index; index += 1; v }
+}
+
 fn gen_sym(name : &str) -> Sym {
     static mut index : usize = 0;
-
-    let v = unsafe { 
-        let v = index;
-        index = index + 1; 
-        v
-    };
-
+    let v = unsafe { let v = index; index += 1; v };
     Sym::Gen(name.into(), v)
 }
 
