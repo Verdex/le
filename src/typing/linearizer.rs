@@ -17,7 +17,10 @@ fn to_linear(ast : Ast) -> Result<Linear, ()> {
         Ast::Variable(sym) => todo!(),
         // func_expr : expr
         // inputs : syntax list of expr
-        Ast::Call { func_expr, inputs } => todo!(),
+        Ast::Call { func_expr, inputs } => {
+            let c = call(*func_expr, *inputs);
+            Ok(repl_main_fun_wrapper(c))
+        },
 
         // name : symbol
         // params : syntax list of slots
@@ -30,4 +33,30 @@ fn to_linear(ast : Ast) -> Result<Linear, ()> {
 
 fn call(func_expr : Ast, inputs : Ast) -> Vec<Stmt> {
     todo!()
+}
+
+fn repl_main_fun_wrapper(body : Vec<Stmt>) -> Linear {
+    Linear::Fun { name : gen_sym("repl_main_wrapper")
+                , params : vec![] 
+                , return_type : Type::Simple("unit".into())
+                , body 
+                }
+}
+
+fn gen_sym(name : &str) -> Sym {
+    static mut index : usize = 0;
+
+    let v = unsafe { 
+        let v = index;
+        index = index + 1; 
+        v
+    };
+
+    Sym::Gen(name.into(), v)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
 }
