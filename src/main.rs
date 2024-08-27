@@ -10,7 +10,7 @@ use std::io::{self, Write};
 pub fn main() {
     loop {
         print!("> ");
-        io::stdout().flush();
+        io::stdout().flush().unwrap(); // TODO error
         let input = read().unwrap(); // TODO handle error scenario here
         let mut input = input.char_indices();
         let tokens = parsing::lexer::lex(&mut input).unwrap(); // TODO error
