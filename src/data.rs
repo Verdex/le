@@ -33,7 +33,7 @@ pub enum Ast {
     IndexType{ name : Box<Ast>, params : Box<Ast> },
     Variable(Box<Ast>),
     Call { 
-        func_expr : Box<Ast>,
+        fun_expr : Box<Ast>,
         inputs : Box<Ast>,
     },
     Function {
@@ -57,7 +57,7 @@ impl Matchable for Ast {
             Ast::SimpleType(name) => MatchKind::Cons("simple-type", vec![&*name]),
             Ast::IndexType { name, params } => MatchKind::Cons("index-type", vec![&*name, params]),
             Ast::Variable(name) => MatchKind::Cons("variable", vec![&*name]),
-            Ast::Call { func_expr, inputs } => MatchKind::Cons("call", vec![&*func_expr, inputs]),
+            Ast::Call { fun_expr, inputs } => MatchKind::Cons("call", vec![&*fun_expr, inputs]),
             Ast::Function { name, params, return_type, body } => 
                 MatchKind::Cons("function", vec![name, params, return_type, body]),
         }

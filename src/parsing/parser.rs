@@ -194,7 +194,7 @@ fn expr_rule() -> Rc<Rule<Token, Ast>> {
                         let follow = Box::new(item.remove(0));
                         match &*t {
                             "call" => 
-                                expr = Ast::Call { func_expr: Box::new(expr), inputs: follow },
+                                expr = Ast::Call { fun_expr: Box::new(expr), inputs: follow },
                             _ => todo!(),
                         }
                     }

@@ -15,8 +15,8 @@ fn to_linear(ast : Ast) -> Result<Linear, ()> {
     match ast {
         Ast::Number(s) => todo!(),
         Ast::Variable(sym) => todo!(),
-        Ast::Call { func_expr, inputs } => {
-            let c = call(*func_expr, *inputs);
+        Ast::Call { fun_expr, inputs } => {
+            let c = call(*fun_expr, *inputs);
             Ok(repl_main_fun_wrapper(c))
         },
 
@@ -32,16 +32,16 @@ fn to_linear(ast : Ast) -> Result<Linear, ()> {
 // return type : usize is the anon local slot that this expr 
 // is being placed at
 fn expr(e : Ast) -> (usize, Vec<Stmt>) {
-
     todo!()
-    /*match e { 
-        Ast::Var(sym) => 
+    /*match e {
+        Ast::Call { fun_expr, inputs }
     }*/
 }
 
 // func_expr : expr
 // inputs : syntax list of expr
 fn call(func_expr : Ast, inputs : Ast) -> Vec<Stmt> {
+    
     todo!()
 }
 
