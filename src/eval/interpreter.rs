@@ -10,8 +10,8 @@ impl Interpreter {
     pub fn new() -> Self { 
         Interpreter { }
     }
+}
 
-    pub fn run(&mut self) {
+pub fn run(m : &mut Interpreter) {
 
-    }
 }
