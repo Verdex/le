@@ -94,6 +94,8 @@ pub enum FunAddr {
 pub enum Stmt {
     SetNameVar(Box<str>, Val),
     SetAnonVar(usize, Val),
+    ReturnNameVar(Box<str>),
+    ReturnAnonVar(usize),
     Call(FunAddr, Vec<Box<str>>),
 }
 
