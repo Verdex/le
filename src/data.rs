@@ -73,7 +73,6 @@ pub enum Type {
 #[derive(Debug)]
 pub enum Val {
     Num(f64),
-    RetReg,
 }
 
 #[derive(Debug)] 
