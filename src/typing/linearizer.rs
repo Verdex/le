@@ -1,4 +1,5 @@
 
+use std::collections::HashSet;
 
 use crate::data::{Ast, Linear, Type, Val, Sym, FunAddr, Stmt};
 
@@ -16,7 +17,8 @@ fn to_linear(ast : Ast) -> Linear {
         Ast::Number(s) => todo!(),
         Ast::Variable(sym) => todo!(),
         Ast::Call { fun_expr, inputs } => {
-            let (a, mut c) = call(*fun_expr, *inputs);
+            // TODO : env will need to be pre-existing items for repl runs
+            let (a, mut c) = call(*fun_expr, *inputs, HashSet::new());
             c.push(Stmt::ReturnAnonVar(a));
             repl_main_fun_wrapper(c)
         },
@@ -30,22 +32,19 @@ fn to_linear(ast : Ast) -> Linear {
     }
 }
 
-// return type : usize is the anon local slot that this expr 
-// is being placed at
-fn expr(e : Ast) -> (usize, Vec<Stmt>) {
-    match e {
-        Ast::Call { fun_expr, inputs } => {
-            let (a, c) = call(*fun_expr, *inputs);
-            todo!()
-        },
-        _ => todo!(),
-    }
-}
-
 // func_expr : expr
 // inputs : syntax list of expr
-fn call(fun_expr : Ast, inputs : Ast) -> (usize, Vec<Stmt>) {
-    
+fn call(fun_expr : Ast, inputs : Ast, env : HashSet<Box<str>>) -> (usize, Vec<Stmt>) {
+   /* match fun_expr {
+        Ast::Call { fun_expr, inputs } => call(*fun_expr, *inputs, env),
+        Ast::Variable(sym) => {
+            match *sym {
+                Ast::Symbol(s) if env.contains(&s) => { },
+                x => { panic!("variable should contain symbol, but found {:?}", x); },
+            }
+        },
+        _ => todo!(),
+    }*/
     todo!()
 }
 
