@@ -9,6 +9,7 @@ pub struct LAddr(usize);
 pub struct Frame { 
     ip : usize,
     locals : Vec<HAddr>,
+    fun : Rc<Fun>,
 }
 
 #[derive(Debug)]
@@ -40,6 +41,7 @@ pub enum Val {
 pub enum Stmt {
     Return(LAddr),
     ConsVal(Val),
+    Call(Rc<Fun>, Vec<LAddr>),
 }
 
 #[derive(Debug)]
@@ -63,13 +65,15 @@ impl SafeAccess for Vec<HAddr> {
 pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[HAddr]) {
     let mut ip : usize = 0;
     let mut locals : Vec<HAddr> = env.iter().map(|x| *x).collect();
+    let mut f = main;
     loop {
-        match main.body[ip] {
+        match f.body[ip] {
             Stmt::Return(local) => {
                 m.ret = Some(locals.sget(local));
                 if let Some(frame) = m.stack.pop() {
                     ip = frame.ip;
                     locals = frame.locals;
+                    f = frame.fun;
                 }
                 else {
                     return;
@@ -79,6 +83,14 @@ pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[HAddr]) {
                 let addr = m.heap.len();
                 m.heap.push(v.clone());
                 locals.push(HAddr(addr));
+                ip += 1;
+            },
+            Stmt::Call(ref fun, ref params) => {
+                let fun = fun.clone();
+                let new_locals = params.iter().map(|x| locals.sget(*x)).collect::<Vec<_>>();
+                let ls = std::mem::replace(&mut locals, new_locals);
+                m.stack.push(Frame { fun, ip: ip + 1, locals: ls });
+                ip = 0;
             },
             _ => todo!(),
         }
