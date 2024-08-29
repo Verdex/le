@@ -125,7 +125,7 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
 }
 
 fn string(first : usize, input : &mut I) -> Result<Token, LexError> {
-    let mut last = first;
+    let last;
     let mut xs = vec![];
     let mut escape = false;
     loop {
@@ -176,7 +176,7 @@ fn triangle(first : usize, input : &mut I) -> Result<Token, LexError> {
     match input.next() {
         None => Err(LexError::UnexpectedEof('|')),
         Some((n, '>')) => Ok(Token::Triangle{ param: 0, start : first, end: n}),
-        Some((n, x)) if x.is_digit(10) => {
+        Some((_, x)) if x.is_digit(10) => {
             let mut ds = vec![x];
             let end = loop {
                 match input.next() {

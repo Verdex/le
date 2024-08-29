@@ -1,6 +1,6 @@
 
-use std::collections::HashSet;
 /*
+use std::collections::HashSet;
 use crate::data::{Ast, Linear, Type, Val, Sym, FunAddr, Stmt};
 
 

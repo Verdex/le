@@ -32,6 +32,12 @@ pub struct Fun {
     body : Vec<Stmt>,
 }
 
+// Assume:  every body has a return at the end
 pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : Vec<Val>) {
-
+    let mut ip = 0;
+    loop {
+        match main.body[ip] {
+            _ => todo!(),
+        }
+    }
 }
