@@ -48,12 +48,26 @@ pub struct Fun {
     body : Vec<Stmt>,
 }
 
+trait SafeAccess { 
+    fn sget(&self, index : LAddr) -> HAddr;
+}
+
+impl SafeAccess for Vec<HAddr> {
+    fn sget(&self, index : LAddr) -> HAddr { 
+        self[index.0]
+    }
+}
+
 // Assume:  every body has a return at the end
 pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[HAddr]) {
     let mut ip : usize = 0;
     let mut locals : Vec<HAddr> = env.iter().map(|x| *x).collect();
     loop {
         match main.body[ip] {
+            Stmt::Return(local) => {
+
+                m.ret = Some(locals.sget(local));
+            },
             _ => todo!(),
         }
     }
