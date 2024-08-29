@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 use crate::data::Ast;
 
+/*
 #[derive(Debug)]
 pub enum Value {
     Number(f64),
@@ -72,3 +73,4 @@ pub fn to_interpreter(ast : Vec<Ast>) -> Result<Program, ()> {
 fn to_interp(ast : Ast) -> Result<T, ()> {
     todo!()
 }
+*/

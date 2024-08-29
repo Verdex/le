@@ -92,6 +92,7 @@ impl Matchable for Ast {
 
 // Linear
 
+/*
 #[derive(Debug)]
 pub enum Type {
     Simple(Box<str>),
@@ -129,5 +130,7 @@ pub enum Stmt {
 pub enum Linear {
     Fun { name : Sym, params : Vec<(Box<str>, Type)>, return_type : Type, body : Vec<Stmt> }
 }
+
+*/
 
 // Interpter

@@ -17,6 +17,8 @@ pub fn main() {
         let ast = parsing::parser::parse(tokens).unwrap(); // TODO error
 
         println!("{:?}", ast);
+
+
     }
 }
 
