@@ -13,7 +13,7 @@ pub struct Frame {
 }
 
 #[derive(Debug)]
-pub struct Interpreter {
+pub struct Vm {
     heap : Vec<Val>,
     stack : Vec<Frame>,
     ret : Option<HAddr>,
@@ -21,12 +21,12 @@ pub struct Interpreter {
 
 // TODO:  le patterns probably need:  generators, foreach, seq, and anon-structs (or row poly or pattern env types)
 
-impl Interpreter {
+impl Vm {
     pub fn new() -> Self { 
-        Interpreter { heap : vec![] 
-                    , stack : vec![]
-                    , ret : None
-                    }
+        Vm { heap : vec![] 
+           , stack : vec![]
+           , ret : None
+           }
     }
 }
 
@@ -74,7 +74,7 @@ impl HeapAccess for Vec<Val> {
 }
 
 // Assume:  every body has a return at the end
-pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[HAddr]) {
+pub fn run(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) {
     let mut ip : usize = 0;
     let mut locals : Vec<HAddr> = env.iter().map(|x| *x).collect();
     let mut f = main;
