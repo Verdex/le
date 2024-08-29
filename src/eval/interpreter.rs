@@ -124,3 +124,9 @@ pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[HAddr]) {
 
 
 */
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+}
