@@ -62,6 +62,16 @@ impl LocalAccess for Vec<HAddr> {
     }
 }
 
+trait HeapAccess { 
+    fn sget(&mut self, index : HAddr) -> &mut Val;
+}
+
+impl HeapAccess for Vec<Val> {
+    fn sget(&mut self, index : HAddr) -> &mut Val { 
+        self.get_mut(index.0).unwrap()
+    }
+}
+
 // Assume:  every body has a return at the end
 pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[HAddr]) {
     let mut ip : usize = 0;
