@@ -42,6 +42,7 @@ pub enum Stmt {
     Return(LAddr),
     ConsVal(Val),
     Call(Rc<Fun>, Vec<LAddr>),
+    DPrint(Vec<LAddr>),
 }
 
 #[derive(Debug)]
@@ -91,6 +92,10 @@ pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[HAddr]) {
                 let ls = std::mem::replace(&mut locals, new_locals);
                 m.stack.push(Frame { fun, ip: ip + 1, locals: ls });
                 ip = 0;
+            },
+            Stmt::DPrint(ref params) => {
+                let targets = params.iter().map(|x| format!("{:?}", m.heap.sget(locals.sget(*x)))).collect::<Vec<_>>();
+                println!("{:?}", targets);
             },
             _ => todo!(),
         }
