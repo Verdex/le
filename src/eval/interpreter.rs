@@ -65,8 +65,14 @@ pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[HAddr]) {
     loop {
         match main.body[ip] {
             Stmt::Return(local) => {
-
                 m.ret = Some(locals.sget(local));
+                if let Some(frame) = m.stack.pop() {
+                    ip = frame.ip;
+                    locals = frame.locals;
+                }
+                else {
+                    return;
+                }
             },
             _ => todo!(),
         }
