@@ -31,14 +31,15 @@ impl Interpreter {
 
 use std::rc::Rc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Val {
-
+    Float(f64),
 }
 
 #[derive(Debug)]
 pub enum Stmt {
     Return(LAddr),
+    ConsVal(Val),
 }
 
 #[derive(Debug)]
@@ -73,6 +74,11 @@ pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[HAddr]) {
                 else {
                     return;
                 }
+            },
+            Stmt::ConsVal(ref v) => {
+                let addr = m.heap.len();
+                m.heap.push(v.clone());
+                locals.push(HAddr(addr));
             },
             _ => todo!(),
         }
