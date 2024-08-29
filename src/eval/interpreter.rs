@@ -51,11 +51,11 @@ pub struct Fun {
     body : Vec<Stmt>,
 }
 
-trait SafeAccess { 
+trait LocalAccess { 
     fn sget(&self, index : LAddr) -> HAddr;
 }
 
-impl SafeAccess for Vec<HAddr> {
+impl LocalAccess for Vec<HAddr> {
     fn sget(&self, index : LAddr) -> HAddr { 
         self[index.0]
     }
