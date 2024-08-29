@@ -1,15 +1,21 @@
 
+#[derive(Debug, Clone, Copy)]
+pub struct HAddr(usize);
+
+#[derive(Debug, Clone, Copy)]
+pub struct LAddr(usize);
+
 #[derive(Debug)]
 pub struct Frame { 
     ip : usize,
-    locals : Vec<usize>,
+    locals : Vec<HAddr>,
 }
 
 #[derive(Debug)]
 pub struct Interpreter {
     heap : Vec<Val>,
     stack : Vec<Frame>,
-    ret : Option<usize>,
+    ret : Option<HAddr>,
 }
 
 // TODO:  le patterns probably need:  generators, foreach, seq, and anon-structs (or row poly or pattern env types)
@@ -32,20 +38,20 @@ pub enum Val {
 
 #[derive(Debug)]
 pub enum Stmt {
-    Return(Option<usize>),
+    Return(LAddr),
 }
 
 #[derive(Debug)]
 pub struct Fun { 
     name : Box<str>,
-    params : Vec<usize>,
+    params : Vec<HAddr>,
     body : Vec<Stmt>,
 }
 
 // Assume:  every body has a return at the end
-pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[usize]) {
+pub fn run(m : &mut Interpreter, main : Rc<Fun>, env : &[HAddr]) {
     let mut ip : usize = 0;
-    let mut locals : Vec<usize> = env.iter().map(|x| *x).collect();
+    let mut locals : Vec<HAddr> = env.iter().map(|x| *x).collect();
     loop {
         match main.body[ip] {
             _ => todo!(),
