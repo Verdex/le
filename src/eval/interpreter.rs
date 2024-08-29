@@ -35,6 +35,7 @@ use std::rc::Rc;
 #[derive(Debug, Clone)]
 pub enum Val {
     Float(f64),
+    Unit,
 }
 
 #[derive(Debug)]
