@@ -24,6 +24,32 @@ pub enum Token {
     Triangle { param : usize, start : usize, end : usize }, 
 }
 
+impl Token { 
+    pub fn error(&self) -> (usize, usize) {
+        match self {
+            Token::Number(_, s, e) => (s, e),
+            Token::Symbol(_, s, e) => (s, e),
+            Token::String(_, s, e) => (s, e),
+            Token::LSquare(x) => (x, x),
+            Token::RSquare(x) => (x, x),
+            Token::LCurl(x) => (x, x),
+            Token::RCurl(x) => (x, x),
+            Token::LParen(x) => (x, x),
+            Token::RParen(x) => (x, x),
+            Token::LAngle(x) => (x, x),
+            Token::RAngle(x) => (x, x),
+            Token::Dot(x) => (x, x),
+            Token::Comma(x) => (x, x),
+            Token::Semicolon(x) => (x, x),
+            Token::Colon(x) => (s, e),
+            Token::Equal(x) => (s, e),
+            Token::RArrow(s, e) => (s, e),
+            Token::R2Arrow(s, e) => (s, e),
+            Token::Triangle { start, end, .. } => (start, end), 
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Ast {
     Number(Box<str>), // TODO : should probably be a symbol instead of str
