@@ -38,10 +38,20 @@ pub enum Val {
     Unit,
 }
 
+impl Val {
+    pub fn float(&self) -> f64 {
+        match self {
+            Val::Float(x) => *x,
+            x => panic!("Expected Float but found {:?}", x),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Stmt {
-    Return(LAddr),
+    Add(LAddr, LAddr),
     ConsVal(Val),
+    Return(LAddr),
     Call(Rc<Fun>, Vec<LAddr>),
     DPrint(Vec<LAddr>),
 }
@@ -65,11 +75,17 @@ impl LocalAccess for Vec<HAddr> {
 
 trait HeapAccess { 
     fn sget(&mut self, index : HAddr) -> &mut Val;
+    fn cons_val(&mut self, v : Val) -> HAddr;
 }
 
 impl HeapAccess for Vec<Val> {
     fn sget(&mut self, index : HAddr) -> &mut Val { 
         self.get_mut(index.0).unwrap()
+    }
+    fn cons_val(&mut self, v : Val) -> HAddr {
+        let addr = self.len();
+        self.push(v);
+        HAddr(addr)
     }
 }
 
@@ -80,6 +96,18 @@ pub fn run(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) {
     let mut f = main;
     loop {
         match f.body[ip] {
+            Stmt::Add(a, b) => {
+                let a = m.heap.sget(locals.sget(a)).float();
+                let b = m.heap.sget(locals.sget(b)).float();
+                let addr = m.heap.cons_val(Val::Float(a + b));
+                locals.push(addr);
+                ip += 1;
+            },
+            Stmt::ConsVal(ref v) => {
+                let addr = m.heap.cons_val(v.clone());
+                locals.push(addr);
+                ip += 1;
+            },
             Stmt::Return(local) => {
                 m.ret = Some(locals.sget(local));
                 if let Some(frame) = m.stack.pop() {
@@ -90,12 +118,6 @@ pub fn run(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) {
                 else {
                     return;
                 }
-            },
-            Stmt::ConsVal(ref v) => {
-                let addr = m.heap.len();
-                m.heap.push(v.clone());
-                locals.push(HAddr(addr));
-                ip += 1;
             },
             Stmt::Call(ref fun, ref params) => {
                 let fun = fun.clone();
