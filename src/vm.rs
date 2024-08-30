@@ -156,10 +156,35 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) {
 mod test {
     use super::*;
 
+    macro_rules! proj {
+        ($input:expr, $p:pat, $e:expr) => { 
+            match $input {
+                $p => $e,
+                _ => unreachable!(),
+            }
+        }
+    }
+
     #[test]
-    fn should_return_env() {
+    fn should_return_val_ref() {
         let mut vm = Vm::new();
 
+        let body = 
+            vec![ Stmt::ConsVal(Val::Float(1.0))
+                , Stmt::Return(LAddr(0)) 
+                ];
+
+        let f = Fun { name: "x".into()
+                    , params: vec![]
+                    , body
+                    };
+
+        vm.run(f.into(), &[]);
+
+        assert!(vm.ret.is_some());
+
+        let v = vm.heap.sget(vm.ret.unwrap()).clone();
+        assert_eq!(proj!(v, Val::Float(x), x), 1.0);
     }
 
 }
