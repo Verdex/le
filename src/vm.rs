@@ -187,4 +187,35 @@ mod test {
         assert_eq!(proj!(v, Val::Float(x), x), 1.0);
     }
 
+    #[test]
+    fn should_return_env_ref() {
+        let mut vm = Vm::new();
+
+        let body = 
+            vec![ Stmt::ConsVal(Val::Float(1.0))
+                , Stmt::Return(LAddr(0)) 
+                ];
+
+        let f = Fun { name: "x".into()
+                    , params: vec![]
+                    , body
+                    };
+
+        vm.run(f.into(), &[]);
+
+        let body = vec![Stmt::Return(LAddr(0))];
+
+        let f = Fun { name: "x".into()
+                    , params: vec![]
+                    , body
+                    };
+
+        let env = [vm.ret.unwrap()];
+        vm.run(f.into(), &env);
+        
+        assert!(vm.ret.is_some());
+
+        let v = vm.heap.sget(vm.ret.unwrap()).clone();
+        assert_eq!(proj!(v, Val::Float(x), x), 1.0);
+    }
 }
