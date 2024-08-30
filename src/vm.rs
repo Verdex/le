@@ -1,4 +1,6 @@
 
+use std::rc::Rc;
+
 #[derive(Debug, Clone, Copy)]
 pub struct HAddr(usize);
 
@@ -28,9 +30,12 @@ impl Vm {
            , ret : None
            }
     }
+
+    pub fn run(&mut self, main : Rc<Fun>, env : &[HAddr]) {
+        run_vm(self, main, env);
+    }
 }
 
-use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub enum Val {
@@ -90,7 +95,7 @@ impl HeapAccess for Vec<Val> {
 }
 
 // Assume:  every body has a return at the end
-pub fn run(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) {
+fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) {
     let mut ip : usize = 0;
     let mut locals : Vec<HAddr> = env.iter().map(|x| *x).collect();
     let mut f = main;
@@ -150,5 +155,11 @@ pub fn run(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn should_return_env() {
+        let mut vm = Vm::new();
+
+    }
 
 }
