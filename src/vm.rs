@@ -57,7 +57,7 @@ impl Val {
 #[derive(Debug)]
 pub enum Stmt {
     Add(LAddr, LAddr),
-    ConsVal(Val),
+    Cons(Vec<Val>),
     Return(LAddr),
     Call(Rc<Fun>, Vec<LAddr>),
     DPrint(Vec<LAddr>),
@@ -81,16 +81,16 @@ impl LocalAccess for Vec<HAddr> {
 
 trait Heap { 
     fn sget(&mut self, index : HAddr) -> &mut Val;
-    fn cons_val(&mut self, v : Val) -> HAddr;
+    fn cons_vals(&mut self, v : Vec<Val>) -> HAddr;
 }
 
 impl Heap for Vec<Val> {
     fn sget(&mut self, index : HAddr) -> &mut Val { 
         self.get_mut(index.0).unwrap()
     }
-    fn cons_val(&mut self, v : Val) -> HAddr {
+    fn cons_vals(&mut self, mut vs : Vec<Val>) -> HAddr {
         let addr = self.len();
-        self.push(v);
+        self.append(&mut vs);
         HAddr(addr)
     }
 }
@@ -105,12 +105,12 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
             Stmt::Add(a, b) => {
                 let a = m.heap.sget(locals.sget(a)).float();
                 let b = m.heap.sget(locals.sget(b)).float();
-                let addr = m.heap.cons_val(Val::Float(a + b));
+                let addr = m.heap.cons_vals(vec![Val::Float(a + b)]);
                 locals.push(addr);
                 ip += 1;
             },
-            Stmt::ConsVal(ref v) => {
-                let addr = m.heap.cons_val(v.clone());
+            Stmt::Cons(ref vs) => {
+                let addr = m.heap.cons_vals(vs.clone());
                 locals.push(addr);
                 ip += 1;
             },
@@ -183,8 +183,8 @@ mod test {
                                   }.into();
 
         let main_body = 
-            vec![ Stmt::ConsVal(Val::Float(1.0))
-                , Stmt::ConsVal(Val::Float(2.0))
+            vec![ Stmt::Cons(vec![Val::Float(1.0)])
+                , Stmt::Cons(vec![Val::Float(2.0)])
                 , Stmt::Call(adder, vec![LAddr(0), LAddr(1)])
                 , Stmt::Return(LAddr(2)) 
                 ];
@@ -204,7 +204,7 @@ mod test {
         let mut vm = Vm::new();
 
         let body = 
-            vec![ Stmt::ConsVal(Val::Float(1.0))
+            vec![ Stmt::Cons(vec![Val::Float(1.0)])
                 , Stmt::Return(LAddr(0)) 
                 ];
 
@@ -214,7 +214,7 @@ mod test {
 
         let ret = vm.run(f.into(), &[]);
 
-        let body = vec![ Stmt::ConsVal(Val::Float(2.0))
+        let body = vec![ Stmt::Cons(vec![Val::Float(2.0)])
                        , Stmt::Add(LAddr(0), LAddr(1))
                        , Stmt::Return(LAddr(2))
                        ];
@@ -235,7 +235,7 @@ mod test {
         let mut vm = Vm::new();
 
         let body = 
-            vec![ Stmt::ConsVal(Val::Float(1.0))
+            vec![ Stmt::Cons(vec![Val::Float(1.0)])
                 , Stmt::Return(LAddr(0)) 
                 ];
 
@@ -254,7 +254,7 @@ mod test {
         let mut vm = Vm::new();
 
         let body = 
-            vec![ Stmt::ConsVal(Val::Float(1.0))
+            vec![ Stmt::Cons(vec![Val::Float(1.0)])
                 , Stmt::Return(LAddr(0)) 
                 ];
 
