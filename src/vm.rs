@@ -173,6 +173,36 @@ mod test {
     }
 
     #[test]
+    fn should_call() {
+        let mut vm = Vm::new();
+
+        let adder_body = 
+            vec![ Stmt::Add(LAddr(0), LAddr(1))
+                , Stmt::Return(LAddr(2)) 
+                ];
+        
+        let adder : Rc<Fun> = Fun { name: "adder".into()
+                                  , body: adder_body
+                                  }.into();
+
+        let main_body = 
+            vec![ Stmt::ConsVal(Val::Float(1.0))
+                , Stmt::ConsVal(Val::Float(2.0))
+                , Stmt::Call(adder, vec![LAddr(0), LAddr(1)])
+                , Stmt::Return(LAddr(2)) 
+                ];
+
+        let main = Fun { name: "main".into()
+                       , body: main_body 
+                       };
+
+        vm.run(main.into(), &[]);
+
+        let v = vm.ret_val().unwrap();
+        assert_eq!(proj!(v, Val::Float(x), *x), 3.0);
+    }
+
+    #[test]
     fn should_add_env_with_local() {
         let mut vm = Vm::new();
 
