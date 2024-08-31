@@ -18,7 +18,6 @@ pub struct Frame {
 pub struct Vm {
     heap : Vec<Val>,
     stack : Vec<Frame>,
-    ret : Option<HAddr>,
 }
 
 // TODO:  le patterns probably need:  generators, foreach, seq, and anon-structs (or row poly or pattern env types)
@@ -27,16 +26,15 @@ impl Vm {
     pub fn new() -> Self { 
         Vm { heap : vec![] 
            , stack : vec![]
-           , ret : None
            }
     }
 
-    pub fn run(&mut self, main : Rc<Fun>, env : &[HAddr]) {
-        run_vm(self, main, env);
+    pub fn run(&mut self, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
+        run_vm(self, main, env)
     }
 
-    pub fn ret_val(&mut self) -> Option<&mut Val> {
-        Some(self.heap.sget(self.ret?))
+    pub fn get_val(&mut self, addr : HAddr) -> &mut Val {
+        self.heap.sget(addr)
     }
 }
 
@@ -98,7 +96,7 @@ impl Heap for Vec<Val> {
 }
 
 // Assume:  every body has a return at the end
-fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) {
+fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
     let mut ip : usize = 0;
     let mut locals : Vec<HAddr> = env.iter().map(|x| *x).collect();
     let mut current = main;
@@ -126,8 +124,7 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) {
                     locals.push(ret);
                 }
                 else {
-                    m.ret = Some(ret);
-                    return;
+                    return ret;
                 }
             },
             Stmt::Call(ref new, ref params) => {
@@ -196,9 +193,9 @@ mod test {
                        , body: main_body 
                        };
 
-        vm.run(main.into(), &[]);
+        let ret = vm.run(main.into(), &[]);
 
-        let v = vm.ret_val().unwrap();
+        let v = vm.get_val(ret);
         assert_eq!(proj!(v, Val::Float(x), *x), 3.0);
     }
 
@@ -215,7 +212,7 @@ mod test {
                     , body
                     };
 
-        vm.run(f.into(), &[]);
+        let ret = vm.run(f.into(), &[]);
 
         let body = vec![ Stmt::ConsVal(Val::Float(2.0))
                        , Stmt::Add(LAddr(0), LAddr(1))
@@ -226,10 +223,10 @@ mod test {
                     , body
                     };
 
-        let env = [vm.ret.unwrap()];
-        vm.run(f.into(), &env);
+        let env = [ret];
+        let ret = vm.run(f.into(), &env);
         
-        let v = vm.ret_val().unwrap();
+        let v = vm.get_val(ret);
         assert_eq!(proj!(v, Val::Float(x), *x), 3.0);
     }
 
@@ -246,11 +243,9 @@ mod test {
                     , body
                     };
 
-        vm.run(f.into(), &[]);
+        let ret = vm.run(f.into(), &[]);
 
-        assert!(vm.ret.is_some());
-
-        let v = vm.ret_val().unwrap();
+        let v = vm.get_val(ret);
         assert_eq!(proj!(v, Val::Float(x), *x), 1.0);
     }
 
@@ -267,7 +262,7 @@ mod test {
                     , body
                     };
 
-        vm.run(f.into(), &[]);
+        let ret = vm.run(f.into(), &[]);
 
         let body = vec![Stmt::Return(LAddr(0))];
 
@@ -275,10 +270,10 @@ mod test {
                     , body
                     };
 
-        let env = [vm.ret.unwrap()];
-        vm.run(f.into(), &env);
+        let env = [ret];
+        let ret = vm.run(f.into(), &env);
         
-        let v = vm.ret_val().unwrap();
+        let v = vm.get_val(ret);
         assert_eq!(proj!(v, Val::Float(x), *x), 1.0);
     }
 }
