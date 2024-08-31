@@ -170,6 +170,39 @@ mod test {
     }
 
     #[test]
+    fn should_add_env_with_local() {
+        let mut vm = Vm::new();
+
+        let body = 
+            vec![ Stmt::ConsVal(Val::Float(1.0))
+                , Stmt::Return(LAddr(0)) 
+                ];
+
+        let f = Fun { name: "x".into()
+                    , params: vec![]
+                    , body
+                    };
+
+        vm.run(f.into(), &[]);
+
+        let body = vec![ Stmt::ConsVal(Val::Float(2.0))
+                       , Stmt::Add(LAddr(0), LAddr(1))
+                       , Stmt::Return(LAddr(2))
+                       ];
+
+        let f = Fun { name: "x".into()
+                    , params: vec![]
+                    , body
+                    };
+
+        let env = [vm.ret.unwrap()];
+        vm.run(f.into(), &env);
+        
+        let v = vm.ret_val().unwrap();
+        assert_eq!(proj!(v, Val::Float(x), *x), 3.0);
+    }
+
+    #[test]
     fn should_return_val_ref() {
         let mut vm = Vm::new();
 
