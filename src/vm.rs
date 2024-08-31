@@ -82,12 +82,12 @@ impl LocalAccess for Vec<HAddr> {
     }
 }
 
-trait HeapAccess { 
+trait Heap { 
     fn sget(&mut self, index : HAddr) -> &mut Val;
     fn cons_val(&mut self, v : Val) -> HAddr;
 }
 
-impl HeapAccess for Vec<Val> {
+impl Heap for Vec<Val> {
     fn sget(&mut self, index : HAddr) -> &mut Val { 
         self.get_mut(index.0).unwrap()
     }
