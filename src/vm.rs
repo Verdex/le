@@ -34,6 +34,10 @@ impl Vm {
     pub fn run(&mut self, main : Rc<Fun>, env : &[HAddr]) {
         run_vm(self, main, env);
     }
+
+    pub fn ret_val(&mut self) -> Option<&mut Val> {
+        Some(self.heap.sget(self.ret?))
+    }
 }
 
 
