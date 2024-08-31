@@ -68,7 +68,6 @@ pub enum Stmt {
 #[derive(Debug)]
 pub struct Fun { 
     name : Box<str>,
-    params : Vec<HAddr>,
     body : Vec<Stmt>,
 }
 
@@ -179,7 +178,6 @@ mod test {
                 ];
 
         let f = Fun { name: "x".into()
-                    , params: vec![]
                     , body
                     };
 
@@ -191,7 +189,6 @@ mod test {
                        ];
 
         let f = Fun { name: "x".into()
-                    , params: vec![]
                     , body
                     };
 
@@ -212,7 +209,6 @@ mod test {
                 ];
 
         let f = Fun { name: "x".into()
-                    , params: vec![]
                     , body
                     };
 
@@ -234,7 +230,6 @@ mod test {
                 ];
 
         let f = Fun { name: "x".into()
-                    , params: vec![]
                     , body
                     };
 
@@ -243,7 +238,6 @@ mod test {
         let body = vec![Stmt::Return(LAddr(0))];
 
         let f = Fun { name: "x".into()
-                    , params: vec![]
                     , body
                     };
 
