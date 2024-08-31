@@ -187,8 +187,8 @@ mod test {
 
         assert!(vm.ret.is_some());
 
-        let v = vm.heap.sget(vm.ret.unwrap()).clone();
-        assert_eq!(proj!(v, Val::Float(x), x), 1.0);
+        let v = vm.ret_val().unwrap();
+        assert_eq!(proj!(v, Val::Float(x), *x), 1.0);
     }
 
     #[test]
@@ -217,9 +217,7 @@ mod test {
         let env = [vm.ret.unwrap()];
         vm.run(f.into(), &env);
         
-        assert!(vm.ret.is_some());
-
-        let v = vm.heap.sget(vm.ret.unwrap()).clone();
-        assert_eq!(proj!(v, Val::Float(x), x), 1.0);
+        let v = vm.ret_val().unwrap();
+        assert_eq!(proj!(v, Val::Float(x), *x), 1.0);
     }
 }
