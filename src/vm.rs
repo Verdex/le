@@ -38,6 +38,9 @@ impl Vm {
     }
 }
 
+// TODO add Lit and have Stmt use lit.  Val has Ref(HAddr) and Lit has Ref(LAddr)
+// Then will also need a converter that for Ref(LAddr) will grab the ref for that local
+
 
 #[derive(Debug, Clone)]
 pub enum Val {
