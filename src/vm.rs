@@ -291,4 +291,28 @@ mod test {
         let v = vm.get_val(ret);
         assert_eq!(proj!(v, Val::Float(x), *x), 1.0);
     }
+
+    #[test]
+    fn should_cons_locals() {
+        let mut vm = Vm::new();
+
+        let body = 
+            vec![ Stmt::Cons(vec![Lit::Float(1.0)])
+                , Stmt::Cons(vec![Lit::Float(2.0)])
+                , Stmt::Cons(vec![Lit::Ref(LAddr(0)), Lit::Ref(LAddr(1))])
+                , Stmt::Deref(LAddr(2), 0)
+                , Stmt::Deref(LAddr(2), 1)
+                , Stmt::Add(LAddr(3), LAddr(4))
+                , Stmt::Return(LAddr(5)) 
+                ];
+
+        let f = Fun { name: "x".into()
+                    , body
+                    };
+
+        let ret = vm.run(f.into(), &[]);
+
+        let v = vm.get_val(ret);
+        assert_eq!(proj!(v, Val::Float(x), *x), 3.0);
+    }
 }
