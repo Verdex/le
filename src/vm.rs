@@ -41,10 +41,17 @@ impl Vm {
 // TODO add Lit and have Stmt use lit.  Val has Ref(HAddr) and Lit has Ref(LAddr)
 // Then will also need a converter that for Ref(LAddr) will grab the ref for that local
 
+#[derive(Debug, Clone)]
+pub enum Lit {
+    Float(f64),
+    Ref(LAddr),
+    Unit,
+}
 
 #[derive(Debug, Clone)]
 pub enum Val {
     Float(f64),
+    Ref(HAddr),
     Unit,
 }
 
@@ -60,7 +67,7 @@ impl Val {
 #[derive(Debug)]
 pub enum Stmt {
     Add(LAddr, LAddr),
-    Cons(Vec<Val>),
+    Cons(Vec<Lit>),
     Return(LAddr),
     Call(Rc<Fun>, Vec<LAddr>),
     DPrint(Vec<LAddr>),
@@ -112,8 +119,8 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
                 locals.push(addr);
                 ip += 1;
             },
-            Stmt::Cons(ref vs) => {
-                let addr = m.heap.cons_vals(vs.clone());
+            Stmt::Cons(ref ls) => {
+                let addr = m.heap.cons_vals(ls.iter().map(lit_to_val).collect());
                 locals.push(addr);
                 ip += 1;
             },
@@ -147,6 +154,13 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
     }
 }
 
+fn lit_to_val(lit : &Lit) -> Val {
+    match lit {
+        Lit::Float(f) => Val::Float(*f),
+        Lit::Unit => Val::Unit,
+        _ => todo!(),
+    }
+}
 
 /*
     fun blah(1, 2, 3) {
@@ -186,8 +200,8 @@ mod test {
                                   }.into();
 
         let main_body = 
-            vec![ Stmt::Cons(vec![Val::Float(1.0)])
-                , Stmt::Cons(vec![Val::Float(2.0)])
+            vec![ Stmt::Cons(vec![Lit::Float(1.0)])
+                , Stmt::Cons(vec![Lit::Float(2.0)])
                 , Stmt::Call(adder, vec![LAddr(0), LAddr(1)])
                 , Stmt::Return(LAddr(2)) 
                 ];
@@ -207,7 +221,7 @@ mod test {
         let mut vm = Vm::new();
 
         let body = 
-            vec![ Stmt::Cons(vec![Val::Float(1.0)])
+            vec![ Stmt::Cons(vec![Lit::Float(1.0)])
                 , Stmt::Return(LAddr(0)) 
                 ];
 
@@ -217,7 +231,7 @@ mod test {
 
         let ret = vm.run(f.into(), &[]);
 
-        let body = vec![ Stmt::Cons(vec![Val::Float(2.0)])
+        let body = vec![ Stmt::Cons(vec![Lit::Float(2.0)])
                        , Stmt::Add(LAddr(0), LAddr(1))
                        , Stmt::Return(LAddr(2))
                        ];
@@ -238,7 +252,7 @@ mod test {
         let mut vm = Vm::new();
 
         let body = 
-            vec![ Stmt::Cons(vec![Val::Float(1.0)])
+            vec![ Stmt::Cons(vec![Lit::Float(1.0)])
                 , Stmt::Return(LAddr(0)) 
                 ];
 
@@ -257,7 +271,7 @@ mod test {
         let mut vm = Vm::new();
 
         let body = 
-            vec![ Stmt::Cons(vec![Val::Float(1.0)])
+            vec![ Stmt::Cons(vec![Lit::Float(1.0)])
                 , Stmt::Return(LAddr(0)) 
                 ];
 
