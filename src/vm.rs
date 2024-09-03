@@ -117,7 +117,7 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
                 ip += 1;
             },
             Stmt::Cons(ref ls) => {
-                let addr = m.heap.cons_vals(ls.iter().map(lit_to_val).collect());
+                let addr = m.heap.cons_vals(ls.iter().map(|x| lit_to_val(x, &locals)).collect());
                 locals.push(addr);
                 ip += 1;
             },
@@ -151,11 +151,11 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
     }
 }
 
-fn lit_to_val(lit : &Lit) -> Val {
+fn lit_to_val(lit : &Lit, locals : &Vec<HAddr>) -> Val {
     match lit {
         Lit::Float(f) => Val::Float(*f),
         Lit::Unit => Val::Unit,
-        _ => todo!(),
+        Lit::Ref(laddr) => Val::Ref(locals.sget(*laddr)),
     }
 }
 
