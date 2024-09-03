@@ -59,10 +59,17 @@ impl Val {
             x => panic!("Expected Float but found {:?}", x),
         }
     }
+    pub fn reference(&self) -> HAddr {
+        match self {
+            Val::Ref(x) => *x,
+            x => panic!("Expected Ref but found {:?}", x),
+        }
+    }
 }
 
 #[derive(Debug)]
 pub enum Stmt {
+    Deref(LAddr, usize),
     Add(LAddr, LAddr),
     Cons(Vec<Lit>),
     Return(LAddr),
@@ -109,6 +116,11 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
     let mut current = main;
     loop {
         match current.body[ip] {
+            Stmt::Deref(local, offset) => {
+                let r = m.heap.sget(locals.sget(local)).reference();
+                locals.push(HAddr(r.0 + offset));
+                ip += 1;
+            },
             Stmt::Add(a, b) => {
                 let a = m.heap.sget(locals.sget(a)).float();
                 let b = m.heap.sget(locals.sget(b)).float();
