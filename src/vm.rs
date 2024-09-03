@@ -38,9 +38,6 @@ impl Vm {
     }
 }
 
-// TODO add Lit and have Stmt use lit.  Val has Ref(HAddr) and Lit has Ref(LAddr)
-// Then will also need a converter that for Ref(LAddr) will grab the ref for that local
-
 #[derive(Debug, Clone)]
 pub enum Lit {
     Float(f64),
@@ -161,17 +158,6 @@ fn lit_to_val(lit : &Lit) -> Val {
         _ => todo!(),
     }
 }
-
-/*
-    fun blah(1, 2, 3) {
-        4 = v
-        5 = v
-        6 = call(other, 1, 5)
-        return 5 
-    }
-
-
-*/
 
 #[cfg(test)]
 mod test {
