@@ -159,13 +159,21 @@ mod test {
         }
     }
 
+    fn local(x : usize) -> LAddr {
+        LAddr::Local(x)
+    }
+
+    fn env(x : usize) -> LAddr {
+        LAddr::Env(x)
+    }
+
     #[test]
     fn should_call() {
         let mut vm = Vm::new();
 
         let adder_body = 
-            vec![ Stmt::Add(LAddr(0), LAddr(1))
-                , Stmt::Return(LAddr(2)) 
+            vec![ Stmt::Add(local(0), local(1))
+                , Stmt::Return(local(2)) 
                 ];
         
         let adder : Rc<Fun> = Fun { name: "adder".into()
@@ -175,8 +183,8 @@ mod test {
         let main_body = 
             vec![ Stmt::Cons(vec![Lit::Float(1.0)])
                 , Stmt::Cons(vec![Lit::Float(2.0)])
-                , Stmt::Call(adder, vec![LAddr(0), LAddr(1)])
-                , Stmt::Return(LAddr(2)) 
+                , Stmt::Call(adder, vec![local(0), local(1)])
+                , Stmt::Return(local(2)) 
                 ];
 
         let main = Fun { name: "main".into()
@@ -195,7 +203,7 @@ mod test {
 
         let body = 
             vec![ Stmt::Cons(vec![Lit::Float(1.0)])
-                , Stmt::Return(LAddr(0)) 
+                , Stmt::Return(local(0)) 
                 ];
 
         let f = Fun { name: "x".into()
@@ -205,16 +213,15 @@ mod test {
         let ret = vm.run(f.into(), &[]);
 
         let body = vec![ Stmt::Cons(vec![Lit::Float(2.0)])
-                       , Stmt::Add(LAddr(0), LAddr(1))
-                       , Stmt::Return(LAddr(2))
+                       , Stmt::Add(env(0), local(0))
+                       , Stmt::Return(local(1))
                        ];
 
         let f = Fun { name: "x".into()
                     , body
                     };
 
-        let env = [ret];
-        let ret = vm.run(f.into(), &env);
+        let ret = vm.run(f.into(), &[ret]);
         
         let v = vm.get_val(ret);
         assert_eq!(proj!(v, Val::Float(x), *x), 3.0);
@@ -226,7 +233,7 @@ mod test {
 
         let body = 
             vec![ Stmt::Cons(vec![Lit::Float(1.0)])
-                , Stmt::Return(LAddr(0)) 
+                , Stmt::Return(local(0)) 
                 ];
 
         let f = Fun { name: "x".into()
@@ -245,7 +252,7 @@ mod test {
 
         let body = 
             vec![ Stmt::Cons(vec![Lit::Float(1.0)])
-                , Stmt::Return(LAddr(0)) 
+                , Stmt::Return(local(0)) 
                 ];
 
         let f = Fun { name: "x".into()
@@ -254,14 +261,13 @@ mod test {
 
         let ret = vm.run(f.into(), &[]);
 
-        let body = vec![Stmt::Return(LAddr(0))];
+        let body = vec![Stmt::Return(env(0))];
 
         let f = Fun { name: "x".into()
                     , body
                     };
 
-        let env = [ret];
-        let ret = vm.run(f.into(), &env);
+        let ret = vm.run(f.into(), &[ret]);
         
         let v = vm.get_val(ret);
         assert_eq!(proj!(v, Val::Float(x), *x), 1.0);
@@ -274,11 +280,11 @@ mod test {
         let body = 
             vec![ Stmt::Cons(vec![Lit::Float(1.0)])
                 , Stmt::Cons(vec![Lit::Float(2.0)])
-                , Stmt::Cons(vec![Lit::Ref(LAddr(0)), Lit::Ref(LAddr(1))])
-                , Stmt::Deref(LAddr(2), 0)
-                , Stmt::Deref(LAddr(2), 1)
-                , Stmt::Add(LAddr(3), LAddr(4))
-                , Stmt::Return(LAddr(5)) 
+                , Stmt::Cons(vec![Lit::Ref(local(0)), Lit::Ref(local(1))])
+                , Stmt::Deref(local(2), 0)
+                , Stmt::Deref(local(2), 1)
+                , Stmt::Add(local(3), local(4))
+                , Stmt::Return(local(5)) 
                 ];
 
         let f = Fun { name: "x".into()
