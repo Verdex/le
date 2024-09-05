@@ -1,5 +1,6 @@
 
 use dealize::pattern::*;
+use dealize::seq::Seqable;
 
 #[derive(Debug)]
 pub enum Token {
@@ -90,6 +91,22 @@ impl Matchable for Ast {
     }
 }
 
+impl<'a> Seqable<'a> for Ast {
+    fn seq_next(&self) -> Vec<&Self> {
+        match self {
+            Ast::Symbol(_) => vec![],
+            Ast::SyntaxList(ls) => ls.iter().collect(),
+            Ast::Number(_) => vec![],
+            Ast::Slot { name, ttype } => vec![&*name, ttype],
+            Ast::SimpleType(name) => vec![&*name],
+            Ast::IndexType { name, params } => vec![&*name, params],
+            Ast::Variable(name) => vec![&*name],
+            Ast::Call { fun_expr, inputs } =>vec![&*fun_expr, inputs],
+            Ast::Function { name, params, return_type, body } => vec![name, params, return_type, body],
+        }
+    }
+}
+
 // Linear
 
 /*
@@ -133,7 +150,6 @@ pub enum Linear {
 
 */
 
-// Interpter
 pub mod vm {
     use std::rc::Rc;
 
