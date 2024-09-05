@@ -59,16 +59,6 @@ impl Vm {
     }
 }
 
-trait LocalAccess { 
-    fn sget(&self, index : LAddr) -> HAddr;
-}
-
-impl LocalAccess for Vec<HAddr> {
-    fn sget(&self, index : LAddr) -> HAddr { 
-        self[index.0]
-    }
-}
-
 trait Heap { 
     fn sget(&mut self, index : HAddr) -> &mut Val;
     fn cons_vals(&mut self, v : Vec<Val>) -> HAddr;
@@ -145,6 +135,10 @@ fn lit_to_val(lit : &Lit, locals : &Vec<HAddr>) -> Val {
         Lit::Unit => Val::Unit,
         Lit::Ref(laddr) => Val::Ref(locals.sget(*laddr)),
     }
+}
+
+fn local_lookup(addr : LAddr, locals : &Vec<HAddr>, env : &[HAddr]) -> HAddr {
+   todo!()
 }
 
 #[cfg(test)]
