@@ -101,7 +101,7 @@ impl<'a> Seqable<'a> for Ast {
             Ast::SimpleType(name) => vec![&*name],
             Ast::IndexType { name, params } => vec![&*name, params],
             Ast::Variable(name) => vec![&*name],
-            Ast::Call { fun_expr, inputs } =>vec![&*fun_expr, inputs],
+            Ast::Call { fun_expr, inputs } => vec![&*fun_expr, inputs],
             Ast::Function { name, params, return_type, body } => vec![name, params, return_type, body],
         }
     }
