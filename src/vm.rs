@@ -7,6 +7,28 @@ pub struct HAddr(usize);
 #[derive(Debug, Clone, Copy)]
 pub struct LAddr(usize);
 
+#[derive(Debug, Clone)]
+pub enum Val {
+    Float(f64),
+    Ref(HAddr),
+    Unit,
+}
+
+impl Val {
+    pub fn float(&self) -> f64 {
+        match self {
+            Val::Float(x) => *x,
+            x => panic!("Expected Float but found {:?}", x),
+        }
+    }
+    pub fn reference(&self) -> HAddr {
+        match self {
+            Val::Ref(x) => *x,
+            x => panic!("Expected Ref but found {:?}", x),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Frame { 
     ip : usize,
@@ -43,28 +65,6 @@ pub enum Lit {
     Float(f64),
     Ref(LAddr),
     Unit,
-}
-
-#[derive(Debug, Clone)]
-pub enum Val {
-    Float(f64),
-    Ref(HAddr),
-    Unit,
-}
-
-impl Val {
-    pub fn float(&self) -> f64 {
-        match self {
-            Val::Float(x) => *x,
-            x => panic!("Expected Float but found {:?}", x),
-        }
-    }
-    pub fn reference(&self) -> HAddr {
-        match self {
-            Val::Ref(x) => *x,
-            x => panic!("Expected Ref but found {:?}", x),
-        }
-    }
 }
 
 #[derive(Debug)]
