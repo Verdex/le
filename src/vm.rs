@@ -88,8 +88,8 @@ impl Heap for Vec<Val> {
 // Assume:  every body has a return at the end
 fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
     let mut ip : usize = 0;
-    let mut locals : Vec<HAddr> = env.iter().map(|x| *x).collect();
-    let mut current = main;
+    let mut locals : Vec<HAddr> = vec![];
+    let mut current : Rc<Fun> = main;
     loop {
         match current.body[ip] {
             Stmt::Deref(local, offset) => {
