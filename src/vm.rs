@@ -30,7 +30,7 @@ impl Val {
 }
 
 #[derive(Debug)]
-pub struct Frame { 
+struct Frame { 
     ip : usize,
     locals : Vec<HAddr>,
     fun : Rc<Fun>,
