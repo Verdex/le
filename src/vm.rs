@@ -140,7 +140,10 @@ fn lit_to_val(lit : &Lit, locals : &Vec<HAddr>, env : &[HAddr]) -> Val {
 }
 
 fn local_lookup(addr : LAddr, locals : &Vec<HAddr>, env : &[HAddr]) -> HAddr {
-   todo!()
+    match addr {
+        LAddr::Local(x) => locals[x],
+        LAddr::Env(x) => env[x],
+    }
 }
 
 #[cfg(test)]
