@@ -82,25 +82,25 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
     let mut current : Rc<Fun> = main;
     loop {
         match current.body[ip] {
-            Stmt::Deref(local, offset) => {
-                let r = m.heap.sget(locals.sget(local)).reference();
+            Stmt::Deref(addr, offset) => {
+                let r = m.heap.sget(local_lookup(addr, &locals, env)).reference();
                 locals.push(HAddr(r.0 + offset));
                 ip += 1;
             },
             Stmt::Add(a, b) => {
-                let a = m.heap.sget(locals.sget(a)).float();
-                let b = m.heap.sget(locals.sget(b)).float();
+                let a = m.heap.sget(local_lookup(a, &locals, env)).float();
+                let b = m.heap.sget(local_lookup(b, &locals, env)).float();
                 let addr = m.heap.cons_vals(vec![Val::Float(a + b)]);
                 locals.push(addr);
                 ip += 1;
             },
             Stmt::Cons(ref ls) => {
-                let addr = m.heap.cons_vals(ls.iter().map(|x| lit_to_val(x, &locals)).collect());
+                let addr = m.heap.cons_vals(ls.iter().map(|x| lit_to_val(x, &locals, env)).collect());
                 locals.push(addr);
                 ip += 1;
             },
-            Stmt::Return(local) => {
-                let ret = locals.sget(local);
+            Stmt::Return(addr) => {
+                let ret = local_lookup(addr, &locals, env);
                 if let Some(frame) = m.stack.pop() {
                     ip = frame.ip;
                     locals = frame.locals;
@@ -113,14 +113,16 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
                 }
             },
             Stmt::Call(ref new, ref params) => {
-                let new_locals = params.iter().map(|x| locals.sget(*x)).collect::<Vec<_>>();
+                let new_locals = params.iter().map(|x| local_lookup(*x, &locals, env)).collect::<Vec<_>>();
                 let ls = std::mem::replace(&mut locals, new_locals);
                 m.stack.push(Frame { fun: Rc::clone(&current), ip: ip + 1, locals: ls });
                 ip = 0;
                 current = Rc::clone(new);
             },
             Stmt::DPrint(ref params) => {
-                let targets = params.iter().map(|x| format!("{:?}", m.heap.sget(locals.sget(*x)))).collect::<Vec<_>>();
+                let targets = params.iter()
+                                    .map(|x| format!("{:?}", m.heap.sget(local_lookup(*x, &locals, env))))
+                                    .collect::<Vec<_>>();
                 println!("{:?}", targets);
                 ip += 1;
             },
@@ -129,11 +131,11 @@ fn run_vm(m : &mut Vm, main : Rc<Fun>, env : &[HAddr]) -> HAddr {
     }
 }
 
-fn lit_to_val(lit : &Lit, locals : &Vec<HAddr>) -> Val {
+fn lit_to_val(lit : &Lit, locals : &Vec<HAddr>, env : &[HAddr]) -> Val {
     match lit {
         Lit::Float(f) => Val::Float(*f),
         Lit::Unit => Val::Unit,
-        Lit::Ref(laddr) => Val::Ref(locals.sget(*laddr)),
+        Lit::Ref(laddr) => Val::Ref(local_lookup(*laddr, locals, env)),
     }
 }
 
