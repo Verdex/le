@@ -154,7 +154,10 @@ pub mod vm {
     use std::rc::Rc;
 
     #[derive(Debug, Clone, Copy)]
-    pub struct LAddr(pub usize);
+    pub enum LAddr {
+        Local(usize),
+        Env(usize),
+    }
 
     #[derive(Debug, Clone)]
     pub enum Lit {
