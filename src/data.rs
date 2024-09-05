@@ -153,7 +153,7 @@ pub enum Linear {
 pub mod vm {
     use std::rc::Rc;
 
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone)]
     pub enum LAddr {
         Local(usize),
         Env(usize),
