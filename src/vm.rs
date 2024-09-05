@@ -1,11 +1,10 @@
 
 use std::rc::Rc;
 
-#[derive(Debug, Clone, Copy)]
-pub struct HAddr(usize);
+use crate::data::vm::*;
 
 #[derive(Debug, Clone, Copy)]
-pub struct LAddr(usize);
+pub struct HAddr(usize);
 
 #[derive(Debug, Clone)]
 pub enum Val {
@@ -58,29 +57,6 @@ impl Vm {
     pub fn get_val(&mut self, addr : HAddr) -> &mut Val {
         self.heap.sget(addr)
     }
-}
-
-#[derive(Debug, Clone)]
-pub enum Lit {
-    Float(f64),
-    Ref(LAddr),
-    Unit,
-}
-
-#[derive(Debug)]
-pub enum Stmt {
-    Deref(LAddr, usize),
-    Add(LAddr, LAddr),
-    Cons(Vec<Lit>),
-    Return(LAddr),
-    Call(Rc<Fun>, Vec<LAddr>),
-    DPrint(Vec<LAddr>),
-}
-
-#[derive(Debug)]
-pub struct Fun { 
-    name : Box<str>,
-    body : Vec<Stmt>,
 }
 
 trait LocalAccess { 

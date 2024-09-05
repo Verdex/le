@@ -134,3 +134,32 @@ pub enum Linear {
 */
 
 // Interpter
+pub mod vm {
+    use std::rc::Rc;
+
+    #[derive(Debug, Clone, Copy)]
+    pub struct LAddr(pub usize);
+
+    #[derive(Debug, Clone)]
+    pub enum Lit {
+        Float(f64),
+        Ref(LAddr),
+        Unit,
+    }
+
+    #[derive(Debug)]
+    pub enum Stmt {
+        Deref(LAddr, usize),
+        Add(LAddr, LAddr),
+        Cons(Vec<Lit>),
+        Return(LAddr),
+        Call(Rc<Fun>, Vec<LAddr>),
+        DPrint(Vec<LAddr>),
+    }
+
+    #[derive(Debug)]
+    pub struct Fun { 
+        pub name : Box<str>,
+        pub body : Vec<Stmt>,
+    }
+}
