@@ -6,6 +6,9 @@ use crate::data::{Ast, vm};
 // repl compile will wrap everything in a function that returns the whatever
 // and then if there's a let or fun (or whatever) assignment that value gets
 // fed back into the env
+pub fn repl_compile(ast : Vec<Ast>) -> Vec<vm::Fun> {
+    todo!()
+}
 
 pub fn compile(ast : Vec<Ast>) -> Vec<vm::Fun> {
     ast.into_iter().map(to_vm).collect()
