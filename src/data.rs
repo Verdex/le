@@ -107,49 +107,6 @@ impl<'a> Seqable<'a> for Ast {
     }
 }
 
-// Linear
-
-/*
-#[derive(Debug)]
-pub enum Type {
-    Simple(Box<str>),
-    Index { name : Box<str>, params : Vec<Type> },
-}
-
-#[derive(Debug)]
-pub enum Val {
-    Num(f64),
-}
-
-#[derive(Debug)] 
-pub enum Sym {
-    Name(Box<str>),
-    Gen(Box<str>, usize),
-}
-
-#[derive(Debug)]
-pub enum FunAddr { 
-    Global(Box<str>),
-    Var(Box<str>),
-    Anon(usize),
-}
-
-#[derive(Debug)]
-pub enum Stmt {
-    SetNameVar(Box<str>, Val),
-    SetAnonVar(usize, Val),
-    ReturnNameVar(Box<str>),
-    ReturnAnonVar(usize),
-    Call(FunAddr, Vec<Box<str>>),
-}
-
-#[derive(Debug)]
-pub enum Linear {
-    Fun { name : Sym, params : Vec<(Box<str>, Type)>, return_type : Type, body : Vec<Stmt> }
-}
-
-*/
-
 pub mod vm {
     use std::rc::Rc;
 
