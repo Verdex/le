@@ -3,15 +3,15 @@ use std::collections::HashSet;
 use crate::data::{Ast, vm};
 
 
-pub fn linearize(ast : Vec<Ast>) -> Vec<vm::Fun> {
-    ast.into_iter().map(to_linear).collect()
+pub fn compile(ast : Vec<Ast>) -> Vec<vm::Fun> {
+    ast.into_iter().map(to_vm).collect()
 }
 
 // Note:: Top level Ast is allowed to be Expr even though
 // the intepreter won't accept a top level Expr because
 // a REPL will want to parse Expr and then wrap in an
 // artifical main function.
-fn to_linear(ast : Ast) -> vm::Fun {
+fn to_vm(ast : Ast) -> vm::Fun {
     match ast {
         Ast::Number(s) => todo!(),
         Ast::Variable(sym) => todo!(),
