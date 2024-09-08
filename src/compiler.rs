@@ -2,6 +2,10 @@
 use std::collections::HashSet;
 use crate::data::{Ast, vm};
 
+// TODO : repl compile needs to be different than normal compile because 
+// repl compile will wrap everything in a function that returns the whatever
+// and then if there's a let or fun (or whatever) assignment that value gets
+// fed back into the env
 
 pub fn compile(ast : Vec<Ast>) -> Vec<vm::Fun> {
     ast.into_iter().map(to_vm).collect()
