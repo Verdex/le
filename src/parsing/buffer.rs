@@ -31,7 +31,7 @@ impl<'a, T> Buffer<'a, T> {
         Err(errors)
     }
 
-    fn option<S, E, F : FnMut(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, mut f : F) -> Result<Option<S>, E> {
+    fn option<S, E, F : FnOnce(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Option<S>, E> {
             let mut ops = self.clone();
             match f(&mut ops) {
                 Ok(v) => {
