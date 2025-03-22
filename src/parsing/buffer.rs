@@ -54,7 +54,7 @@ impl<'a, T> Ops<'a, T> {
             }
     }
 
-    fn zero_or_more<S, E, F : Fn(&mut Ops<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Vec<S>, E> {
+    fn list<S, E, F : Fn(&mut Ops<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Vec<S>, E> {
         let mut rets = vec![];
         loop {
             let mut ops = self.clone();
