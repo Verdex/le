@@ -1,33 +1,17 @@
 
-pub struct Buffer<T> {
-    input : Vec<T>,
-    index : usize,
-}
-
-impl<T> Buffer<T> {
-    fn parse<S, E, F : Fn(&mut Ops<T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
-        let mut ops = Ops { input: &self.input, index: self.index };
-
-        let ret = f(&mut ops)?;
-        self.index = ops.index;
-
-        Ok(ret)
-    }
-}
-
-pub struct Ops<'a, T> {
+pub struct Buffer<'a, T> {
     input : &'a [T],
     index : usize,
 }
 
-impl<'a, T> Clone for Ops<'a, T> {
+impl<'a, T> Clone for Buffer<'a, T> {
     fn clone(&self) -> Self {
-        Ops { input: self.input, index: self.index}
+        Buffer { input: self.input, index: self.index }
     }
 }
 
-impl<'a, T> Ops<'a, T> {
-    fn or<S, E, const N : usize>(&mut self, targets : [fn(&mut Ops<'a, T>) -> Result<S, E>; N]) -> Result<S, Vec<E>> {
+impl<'a, T> Buffer<'a, T> {
+    fn or<S, E, const N : usize>(&mut self, targets : [fn(&mut Buffer<'a, T>) -> Result<S, E>; N]) -> Result<S, Vec<E>> {
         let mut errors = vec![];
         for target in targets {
             let mut ops = self.clone();
@@ -43,7 +27,7 @@ impl<'a, T> Ops<'a, T> {
         Err(errors)
     }
 
-    fn option<S, E, F : Fn(&mut Ops<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Option<S>, E> {
+    fn option<S, E, F : Fn(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Option<S>, E> {
             let mut ops = self.clone();
             match f(&mut ops) {
                 Ok(v) => {
@@ -54,7 +38,7 @@ impl<'a, T> Ops<'a, T> {
             }
     }
 
-    fn list<S, E, F : Fn(&mut Ops<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Vec<S>, E> {
+    fn list<S, E, F : Fn(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Vec<S>, E> {
         let mut rets = vec![];
         loop {
             let mut ops = self.clone();
@@ -90,7 +74,7 @@ impl<'a, T> Ops<'a, T> {
         }
     }
 
-    fn with_rollback<S, E, F : Fn(&mut Ops<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
+    fn with_rollback<S, E, F : Fn(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
         let mut ops = self.clone();
         let r = f(&mut ops)?;
         self.index = ops.index;
