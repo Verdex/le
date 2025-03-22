@@ -20,6 +20,12 @@ pub struct Ops<'a, T> {
     index : usize,
 }
 
+impl<'a, T> Clone for Ops<'a, T> {
+    fn clone(&self) -> Self {
+        Ops { input: self.input, index: self.index}
+    }
+}
+
 impl<'a, T> Ops<'a, T> {
     fn or<S, E, const N : usize>(&mut self, targets : [fn(&mut Ops<'a, T>) -> Result<S, E>; N]) -> Result<S, Vec<E>> {
         let mut errors = vec![];
