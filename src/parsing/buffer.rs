@@ -31,7 +31,7 @@ impl<'a, T> Buffer<'a, T> {
         Err(errors)
     }
 
-    fn option<S, E, F : Fn(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Option<S>, E> {
+    fn option<S, E, F : FnMut(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, mut f : F) -> Result<Option<S>, E> {
             let mut ops = self.clone();
             match f(&mut ops) {
                 Ok(v) => {
@@ -42,7 +42,7 @@ impl<'a, T> Buffer<'a, T> {
             }
     }
 
-    fn list<S, E, F : Fn(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Vec<S>, E> {
+    fn list<S, E, F : FnMut(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, mut f : F) -> Result<Vec<S>, E> {
         let mut rets = vec![];
         loop {
             let mut ops = self.clone();
@@ -78,7 +78,7 @@ impl<'a, T> Buffer<'a, T> {
         }
     }
 
-    fn with_rollback<S, E, F : Fn(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
+    fn with_rollback<S, E, F : FnOnce(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
         let mut ops = self.clone();
         let r = f(&mut ops)?;
         self.index = ops.index;
