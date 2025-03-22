@@ -11,6 +11,10 @@ impl<'a, T> Clone for Buffer<'a, T> {
 }
 
 impl<'a, T> Buffer<'a, T> {
+    fn new(input : &'a [T]) -> Buffer<'a, T> {
+        Buffer { input, index: 0 }
+    }
+
     fn or<S, E, const N : usize>(&mut self, targets : [fn(&mut Buffer<'a, T>) -> Result<S, E>; N]) -> Result<S, Vec<E>> {
         let mut errors = vec![];
         for target in targets {
