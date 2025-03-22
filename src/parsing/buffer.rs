@@ -29,9 +29,13 @@ impl<'a, T> Clone for Ops<'a, T> {
 impl<'a, T> Ops<'a, T> {
     fn or<S, E, const N : usize>(&mut self, targets : [fn(&mut Ops<'a, T>) -> Result<S, E>; N]) -> Result<S, Vec<E>> {
         let mut errors = vec![];
-        for w in targets {
-            match w(self) {
-                Ok(s) => { return Ok(s); },
+        for target in targets {
+            let mut ops = self.clone();
+            match target(&mut ops) {
+                Ok(s) => { 
+                    std::mem::swap(&mut ops, self);
+                    return Ok(s); 
+                },
                 Err(e) => { errors.push(e); },
             }
         }
