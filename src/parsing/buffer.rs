@@ -43,6 +43,32 @@ impl<'a, T> Ops<'a, T> {
         Err(errors)
     }
 
+    fn option<S, E, F : Fn(&mut Ops<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Option<S>, E> {
+            let mut ops = self.clone();
+            match f(&mut ops) {
+                Ok(v) => {
+                    self.index = ops.index;
+                    Ok(Some(v))
+                },
+                Err(e) => Ok(None),
+            }
+    }
+
+    fn zero_or_more<S, E, F : Fn(&mut Ops<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Vec<S>, E> {
+        let mut rets = vec![];
+        loop {
+            let mut ops = self.clone();
+            match f(&mut ops) {
+                Ok(v) => {
+                    self.index = ops.index;
+                    rets.push(v);
+                },
+                Err(e) => { break; },
+            }
+        }
+        Ok(rets)
+    }
+
     fn peek<E>(&self, e : E) -> Result<&T, E> {
         if self.index < self.input.len() {
             let r = &self.input[self.index];
