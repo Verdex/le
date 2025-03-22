@@ -5,10 +5,10 @@ pub struct Buffer<T> {
 }
 
 impl<T> Buffer<T> {
-    fn parse<S, E, F : Fn(&mut Ops<T>) -> Result<S, E>>(&mut self, with_buffer : F) -> Result<S, E> {
+    fn parse<S, E, F : Fn(&mut Ops<T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
         let mut ops = Ops { input: &self.input, index: self.index };
 
-        let ret = with_buffer(&mut ops)?;
+        let ret = f(&mut ops)?;
         self.index = ops.index;
 
         Ok(ret)
@@ -41,5 +41,38 @@ impl<'a, T> Ops<'a, T> {
         }
 
         Err(errors)
+    }
+
+    fn peek<E>(&self, e : E) -> Result<&T, E> {
+        if self.index < self.input.len() {
+            let r = &self.input[self.index];
+            Ok(r)
+        }
+        else {
+            Err(e)
+        }
+    }
+
+    fn get<E>(&mut self, e : E) -> Result<&T, E> {
+        if self.index < self.input.len() {
+            let r = &self.input[self.index];
+            self.index += 1;
+            Ok(r)
+        }
+        else {
+            Err(e)
+        }
+    }
+
+    fn with_rollback<S, E, F : Fn(&mut Ops<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
+        let mut ops = self.clone();
+
+        match f(&mut ops) {
+            Ok(s) => {
+                std::mem::swap(&mut ops, self);
+                Ok(s)
+            }
+            Err(e) => Err(e),
+        }
     }
 }
