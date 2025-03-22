@@ -33,7 +33,7 @@ impl<'a, T> Ops<'a, T> {
             let mut ops = self.clone();
             match target(&mut ops) {
                 Ok(s) => { 
-                    std::mem::swap(&mut ops, self);
+                    self.index = ops.index;
                     return Ok(s); 
                 },
                 Err(e) => { errors.push(e); },
@@ -66,13 +66,8 @@ impl<'a, T> Ops<'a, T> {
 
     fn with_rollback<S, E, F : Fn(&mut Ops<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
         let mut ops = self.clone();
-
-        match f(&mut ops) {
-            Ok(s) => {
-                std::mem::swap(&mut ops, self);
-                Ok(s)
-            }
-            Err(e) => Err(e),
-        }
+        let r = f(&mut ops)?;
+        self.index = ops.index;
+        Ok(r)
     }
 }
