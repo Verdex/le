@@ -5,7 +5,7 @@ pub struct Buffer<T> {
 }
 
 impl<T> Buffer<T> {
-    fn parse<S, F : Fn(&mut Ops<T>) -> Result<S, ()>>(&mut self, with_buffer : F) -> Result<S, ()> {
+    fn parse<S, E, F : Fn(&mut Ops<T>) -> Result<S, E>>(&mut self, with_buffer : F) -> Result<S, E> {
         let mut ops = Ops { input: &self.input, index: self.index };
 
         let ret = with_buffer(&mut ops)?;
@@ -21,11 +21,15 @@ pub struct Ops<'a, T> {
 }
 
 impl<'a, T> Ops<'a, T> {
-    fn or<S, const N : usize>(&mut self, targets : [fn(&mut Ops<'a, T>) -> Result<S, ()>; N]) -> Result<S, ()> {
+    fn or<S, E, const N : usize>(&mut self, targets : [fn(&mut Ops<'a, T>) -> Result<S, E>; N]) -> Result<S, Vec<E>> {
+        let mut errors = vec![];
         for w in targets {
-            w(self);
+            match w(self) {
+                Ok(s) => { return Ok(s); },
+                Err(e) => { errors.push(e); },
+            }
         }
-        todo!()
-    }
 
+        Err(errors)
+    }
 }
