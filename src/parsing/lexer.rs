@@ -149,7 +149,7 @@ fn number<'a>(input : &mut Buffer<'a, char>) -> Result<Token, LexError> {
     let mut rest = input.list(|input| input.or([digit, dot]))?;
     rest.insert(0, first);
 
-    if rest.iter().filter(|x| **x == '.').count() < 1 {
+    if rest.iter().filter(|x| **x == '.').count() > 1 {
         Err(LexError::NumberWithMultipleDots(rest.into_iter().collect(), start))
     }
     else {
