@@ -3,8 +3,23 @@ use dealize::pattern::*;
 use dealize::seq::Seqable;
 
 #[derive(Debug)]
+pub struct Meta {
+    pub start : usize,
+    pub end : usize,
+}
+
+impl Meta { 
+    pub fn range(start : usize, end : usize) -> Self {
+        Meta { start, end }
+    }
+    pub fn single(start : usize) -> Self {
+        Meta { start, end: start }
+    }
+}
+
+#[derive(Debug)]
 pub enum Token {
-    Number(Box<str>, usize, usize),
+    Number(Box<str>, Meta),
     Symbol(Box<str>, usize, usize),
     String(Box<str>, usize, usize),
     LSquare(usize),
@@ -28,7 +43,7 @@ pub enum Token {
 impl Token { 
     pub fn error(&self) -> (usize, usize) {
         match self {
-            Token::Number(_, s, e) => (*s, *e),
+            Token::Number(_, m) => (m.start, m.end),
             Token::Symbol(_, s, e) => (*s, *e),
             Token::String(_, s, e) => (*s, *e),
             Token::LSquare(x) => (*x, *x),
