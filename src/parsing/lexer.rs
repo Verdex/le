@@ -11,6 +11,7 @@ pub enum LexError {
     UnexpectedEof,
     UnknownEscape(char, usize),
     UnexpectedChar(&'static str, char, usize),
+    NumberWithMultipleDots(Box<str>, usize),
     Aggregate(Vec<LexError>),
 }
 
@@ -22,6 +23,8 @@ impl std::fmt::Display for LexError {
             LexError::UnexpectedEof => write!(f, "unexpected end of file encountered"),
             LexError::UnknownEscape(c, n) => write!(f, "unknown escape character {} found in string at {}", c, n),
             LexError::UnexpectedChar(expected, unknown, loc) => write!(f, "expected {} but found {} at {}", expected, unknown, loc),
+            LexError::NumberWithMultipleDots(number, loc) => 
+                write!(f, "encountered number with too many decimal points: {} at {}", number, loc),
             LexError::Aggregate(errors) => write!(f, "encountered error list:\n{}", 
                 errors.into_iter().map(|x| format!("  {}\n", x)).collect::<Vec<_>>().join("")),
         }
