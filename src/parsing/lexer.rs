@@ -1,7 +1,6 @@
 
 use super::buffer::Buffer;
 
-use std::str::CharIndices as I;
 
 use crate::data::Token;
 
