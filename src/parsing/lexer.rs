@@ -38,8 +38,17 @@ impl From<Vec<LexError>> for LexError {
 impl std::error::Error for LexError { }
 
 pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
+    let input = input.chars().collect::<Vec<_>>();
+    let mut buffer = Buffer::new(&input);
 
-    Ok(vec![])
+    let mut tokens = vec![];
+
+    while !buffer.end() {
+        let token = buffer.or([number])?;
+        tokens.push(token);
+    }
+
+    Ok(tokens)
 
     /*let mut ts : Vec<Token> = vec![];
 
