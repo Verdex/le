@@ -288,7 +288,7 @@ mod test {
     #[test]
     fn should_parse_fun_with_complex_index_type() {
         let s = "fun name() -> T3<T1<T4>, T2, T5> { }";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -314,7 +314,7 @@ mod test {
     #[test]
     fn should_parse_fun_with_index_type() {
         let s = "fun name() -> T3<T1> { }";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -335,7 +335,7 @@ mod test {
     #[test]
     fn should_parse_zero_param_fun() {
         let s = "fun name() -> T3 { }";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -354,7 +354,7 @@ mod test {
     #[test]
     fn should_parse_single_param_fun() {
         let s = "fun name(x : T) -> T3 { }";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -373,7 +373,7 @@ mod test {
     #[test]
     fn should_parse_fun() {
         let s = "fun name(x : T1, y : T2) -> T3 { }";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -394,7 +394,7 @@ mod test {
     #[test]
     fn should_parse_variable() {
         let s = "var";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -410,7 +410,7 @@ mod test {
     #[test]
     fn should_parse_fun_call_with_complex_param() {
         let s = "blah(ah(b()), c, d()(e, i))()";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -426,7 +426,7 @@ mod test {
     #[test]
     fn should_parse_fun_call_with_multiple_param() {
         let s = "blah(val, two, other)";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -445,7 +445,7 @@ mod test {
     #[test]
     fn should_parse_fun_call_with_param() {
         let s = "blah(val)";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -462,7 +462,7 @@ mod test {
     #[test]
     fn should_parse_fun_call_call() {
         let s = "blah()()";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -479,7 +479,7 @@ mod test {
     #[test]
     fn should_parse_fun_call() {
         let s = "blah()";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -494,7 +494,7 @@ mod test {
 
     #[test]
     fn should_parse_number() {
-        let input = lexer::lex(&mut "100".char_indices()).unwrap();
+        let input = lexer::lex("100".into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 

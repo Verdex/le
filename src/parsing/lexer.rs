@@ -1,4 +1,6 @@
 
+use super::buffer::Buffer;
+
 use std::str::CharIndices as I;
 
 use crate::data::Token;
@@ -29,9 +31,11 @@ impl std::fmt::Display for LexError {
 
 impl std::error::Error for LexError { }
 
-pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
+pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
 
-    let mut ts : Vec<Token> = vec![];
+    Ok(vec![])
+
+    /*let mut ts : Vec<Token> = vec![];
 
     let mut left_over : Option<(usize, char)> = None;
     loop {
@@ -121,7 +125,7 @@ pub fn lex(input : &mut I) -> Result<Vec<Token>, LexError> {
         }
     }
 
-    Ok(ts)
+    Ok(ts)*/
 }
 
 fn string(first : usize, input : &mut I) -> Result<Token, LexError> {
@@ -363,8 +367,7 @@ mod test {
 
     #[test]
     fn should_lex_number() {
-        let mut input = "100".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("100".into()).unwrap();
 
         assert_eq!(output.len(), 1);
         assert_eq!(proj_num(&output[0]), "100");
@@ -372,8 +375,7 @@ mod test {
 
     #[test]
     fn should_lex_negative_number() {
-        let mut input = "-100".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("-100".into()).unwrap();
 
         assert_eq!(output.len(), 1);
         assert_eq!(proj_num(&output[0]), "-100");
@@ -381,8 +383,7 @@ mod test {
 
     #[test]
     fn should_lex_decimal_number() {
-        let mut input = "100.25".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("100.25".into()).unwrap();
 
         assert_eq!(output.len(), 1);
         assert_eq!(proj_num(&output[0]), "100.25");
@@ -390,8 +391,7 @@ mod test {
 
     #[test]
     fn should_lex_negative_decimal_number() {
-        let mut input = "-100.25".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("-100.25".into()).unwrap();
 
         assert_eq!(output.len(), 1);
         assert_eq!(proj_num(&output[0]), "-100.25");
@@ -399,17 +399,16 @@ mod test {
 
     #[test]
     fn should_lex_line_comment() {
-        let mut input = "// ~~~~ ".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("// ~~~~ ".into()).unwrap();
 
         assert_eq!(output.len(), 0);
     }
 
     #[test]
     fn should_lex_block_comment() {
-        let mut input = "/* ~~
-        ~~ */".char_indices();
-        let output = lex(&mut input).unwrap();
+        let input = "/* ~~
+        ~~ */";
+        let output = lex(input.into()).unwrap();
 
         assert_eq!(output.len(), 0);
     }
@@ -417,24 +416,22 @@ mod test {
     #[test]
     fn should_lex_nested_block_comment() {
         let mut input = "/* ~
-        ~/*~~*/~ */".char_indices();
-        let output = lex(&mut input).unwrap();
+        ~/*~~*/~ */";
+        let output = lex(input.into()).unwrap();
 
         assert_eq!(output.len(), 0);
     }
 
     #[test]
     fn should_lex_whitespace_ending_in_eof() {
-        let mut input = "   ".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("   ".into()).unwrap();
 
         assert_eq!(output.len(), 0);
     }
 
     #[test]
     fn should_lex_whitespace_ending_in_number() {
-        let mut input = "   8".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("   8".into()).unwrap();
 
         assert_eq!(output.len(), 1);
         assert_eq!(proj_num(&output[0]), "8");
@@ -443,8 +440,7 @@ mod test {
 
     #[test]
     fn should_lex_number_followed_by_r_arrow() {
-        let mut input = "25.->".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("25.->".into()).unwrap();
 
         assert_eq!(output.len(), 2);
         assert!(matches!(output[0], Token::Number(_, _, _)));
@@ -455,8 +451,7 @@ mod test {
 
     #[test]
     fn should_lex_punct() {
-        let mut input = "->==>()[]{}<>,:;.".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("->==>()[]{}<>,:;.".into()).unwrap();
 
         assert_eq!(output.len(), 15);
         assert!(matches!(output[0], Token::RArrow(_, _)));
@@ -487,8 +482,7 @@ mod test {
             }
         }
 
-        let mut input = "|> |1> |10> |100>".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("|> |1> |10> |100>".into()).unwrap();
 
         assert_eq!(output.len(), 4);
         a(&output[0], 0);
@@ -499,8 +493,7 @@ mod test {
 
     #[test]
     fn should_lex_symbol() {
-        let mut input = "symbol. _symbol _1 Symbol_8".char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex("symbol. _symbol _1 Symbol_8".into()).unwrap();
 
         assert_eq!(output.len(), 5);
         assert_eq!(proj_sym(&output[0]), "symbol");
@@ -512,8 +505,7 @@ mod test {
 
     #[test]
     fn should_lex_string() {
-        let mut input = r#" "string !@#$%^&* \n\t\r\0\\\"". "#.char_indices();
-        let output = lex(&mut input).unwrap();
+        let output = lex(r#" "string !@#$%^&* \n\t\r\0\\\"". "#.into()).unwrap();
 
         assert_eq!(output.len(), 2);
         assert_eq!(proj_str(&output[0]), "string !@#$%^&* \n\t\r\0\\\"");
