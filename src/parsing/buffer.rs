@@ -92,6 +92,10 @@ impl<'a, T> Buffer<'a, T> {
         self.index >= self.input.len()
     }
 
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
     pub fn with_rollback<S, E, F : FnOnce(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
         let mut ops = self.clone();
         let r = f(&mut ops)?;
