@@ -10,7 +10,7 @@ pub enum LexError {
     StringEof, 
     UnexpectedEof,
     UnknownEscape(char, usize),
-    UnknownChar(&'static str, char, usize),
+    UnexpectedChar(&'static str, char, usize),
     Aggregate(Vec<LexError>),
 }
 
@@ -21,7 +21,7 @@ impl std::fmt::Display for LexError {
             LexError::BlockCommentEof => write!(f, "end of file encountered mid block comment"),
             LexError::UnexpectedEof => write!(f, "unexpected end of file encountered"),
             LexError::UnknownEscape(c, n) => write!(f, "unknown escape character {} found in string at {}", c, n),
-            LexError::UnknownChar(expected, unknown, loc) => write!(f, "expected {} but found {} at {}", expected, unknown, loc),
+            LexError::UnexpectedChar(expected, unknown, loc) => write!(f, "expected {} but found {} at {}", expected, unknown, loc),
             LexError::Aggregate(errors) => write!(f, "encountered error list:\n{}", 
                 errors.into_iter().map(|x| format!("  {}\n", x)).collect::<Vec<_>>().join("")),
         }
@@ -147,7 +147,7 @@ fn dot(input : &mut Buffer<char>) -> Result<char, LexError> {
         Ok(*c)
     }
     else {
-        Err(LexError::UnknownChar(".", *c, index))
+        Err(LexError::UnexpectedChar(".", *c, index))
     }
 }
 
@@ -158,7 +158,7 @@ fn digit(input : &mut Buffer<char>) -> Result<char, LexError> {
         Ok(*c)
     }
     else {
-        Err(LexError::UnknownChar("[0-9]", *c, index))
+        Err(LexError::UnexpectedChar("[0-9]", *c, index))
     }
 }
 
@@ -169,7 +169,7 @@ fn minus(input : &mut Buffer<char>) -> Result<char, LexError> {
         Ok(*c)
     }
     else {
-        Err(LexError::UnknownChar("-", *c, index))
+        Err(LexError::UnexpectedChar("-", *c, index))
     }
 }
 
