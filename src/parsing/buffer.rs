@@ -78,6 +78,19 @@ impl<'a, T> Buffer<'a, T> {
         }
     }
 
+    pub fn pred<E, F : FnOnce(&T) -> bool>(&mut self, f : F, e : E) -> Result<(), E> {
+        if self.index < self.input.len() && f(&self.input[self.index]) {
+            Ok(())
+        }
+        else { 
+            Err(e)
+        }
+    }
+
+    pub fn end(&self) -> bool {
+        self.index >= self.input.len()
+    }
+
     pub fn with_rollback<S, E, F : FnOnce(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
         let mut ops = self.clone();
         let r = f(&mut ops)?;
