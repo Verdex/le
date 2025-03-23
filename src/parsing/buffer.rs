@@ -78,16 +78,6 @@ impl<'a, T> Buffer<'a, T> {
         }
     }
 
-    pub fn pred<E, F : FnOnce(&T) -> bool>(&mut self, f : F, e : E) -> Result<(), E> {
-        if self.index < self.input.len() && f(&self.input[self.index]) {
-            self.index += 1;
-            Ok(())
-        }
-        else { 
-            Err(e)
-        }
-    }
-
     pub fn end(&self) -> bool {
         self.index >= self.input.len()
     }
