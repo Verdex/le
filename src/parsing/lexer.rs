@@ -137,10 +137,17 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
 }
 
 fn number<'a>(input : &mut Buffer<'a, char>) -> Result<Token, LexError> {
+    let start = input.index();
     let first = input.or([minus, digit])?;
     let mut rest = input.list(|input| input.or([digit, dot]))?;
     rest.insert(0, first);
-    Ok(Token::Comma(0))
+
+    if rest.iter().filter(|x| **x == '.').count() < 1 {
+        Err(LexError::NumberWithMultipleDots(rest.into_iter().collect(), start))
+    }
+    else {
+        Ok(Token::Number(rest.into_iter().collect(), 0, 0))
+    }
 }
 
 fn dot(input : &mut Buffer<char>) -> Result<char, LexError> {
