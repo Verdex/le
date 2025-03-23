@@ -10,7 +10,7 @@ pub enum LexError {
     StringEof, 
     UnexpectedEof,
     UnknownEscape(char, usize),
-    UnknownChar(char, char, usize),
+    UnknownChar(&'static str, char, usize),
     Aggregate(Vec<LexError>),
 }
 
@@ -133,6 +133,47 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
     Ok(ts)*/
 }
 
+fn number<'a>(input : &mut Buffer<'a, char>) -> Result<Token, LexError> {
+    let first = input.or([minus, digit])?;
+    let mut rest = input.list(|input| input.or([digit, dot]))?;
+    rest.insert(0, first);
+    Ok(Token::Comma(0))
+}
+
+fn dot(input : &mut Buffer<char>) -> Result<char, LexError> {
+    let index = input.index();
+    let c = input.get(LexError::UnexpectedEof)?;
+    if *c == '.' {
+        Ok(*c)
+    }
+    else {
+        Err(LexError::UnknownChar(".", *c, index))
+    }
+}
+
+fn digit(input : &mut Buffer<char>) -> Result<char, LexError> {
+    let index = input.index();
+    let c = input.get(LexError::UnexpectedEof)?;
+    if c.is_digit(10) {
+        Ok(*c)
+    }
+    else {
+        Err(LexError::UnknownChar("[0-9]", *c, index))
+    }
+}
+
+fn minus(input : &mut Buffer<char>) -> Result<char, LexError> {
+    let index = input.index();
+    let c = input.get(LexError::UnexpectedEof)?;
+    if *c == '-' {
+        Ok(*c)
+    }
+    else {
+        Err(LexError::UnknownChar("-", *c, index))
+    }
+}
+
+/*
 fn string(first : usize, input : &mut I) -> Result<Token, LexError> {
     let last;
     let mut xs = vec![];
@@ -344,7 +385,7 @@ fn block_comment(input : &mut I) -> Result<(), LexError> {
         }
     }
 }
-
+*/
 #[cfg(test)] 
 mod test {
     use super::*;
