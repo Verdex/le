@@ -1,8 +1,6 @@
 
 use super::buffer::Buffer;
-
-
-use crate::data::Token;
+use crate::data::{ Meta, Token };
 
 #[derive(Debug)]
 pub enum LexError {
@@ -146,7 +144,9 @@ fn number<'a>(input : &mut Buffer<'a, char>) -> Result<Token, LexError> {
         Err(LexError::NumberWithMultipleDots(rest.into_iter().collect(), start))
     }
     else {
-        Ok(Token::Number(rest.into_iter().collect(), 0, 0))
+        let n : Box<str> = rest.into_iter().collect();
+        let end = n.len();
+        Ok(Token::Number(n, Meta::range(start, end)))
     }
 }
 
@@ -402,7 +402,7 @@ mod test {
 
     fn proj_num(input : &Token) -> String {
         match input {
-            Token::Number(x, _, _) => x.to_string(),
+            Token::Number(x, _) => x.to_string(),
             _ => panic!("not a number"),
         }
     }
@@ -499,7 +499,7 @@ mod test {
         let output = lex("25.->".into()).unwrap();
 
         assert_eq!(output.len(), 2);
-        assert!(matches!(output[0], Token::Number(_, _, _)));
+        assert!(matches!(output[0], Token::Number(_, _)));
         assert!(matches!(output[1], Token::RArrow(_, _)));
 
         assert_eq!(proj_num(&output[0]), "25.");

@@ -145,10 +145,10 @@ fn expr_rule() -> Rc<Rule<Token, Ast>> {
     let redirect_list = comma_list_gen("redirect_list", &redirect);
 
     let number = Rule::new( "number"
-                          , vec![pred_match!(Token::Number(_, _, _))]
+                          , vec![pred_match!(Token::Number(_, _))]
                           , transform!(result, {
                                 proj!( result.unwrap().unwrap()
-                                     , Token::Number(n, _, _)
+                                     , Token::Number(n, _)
                                      , Ok(Ast::Number(n.clone()))
                                      )
                           }));
