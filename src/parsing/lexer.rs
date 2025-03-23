@@ -9,10 +9,10 @@ use crate::data::Token;
 pub enum LexError {
     BlockCommentEof,
     StringEof, 
-    UnexpectedEof(char),
-    UnexpectedUnknown{ before: char, unexpected : char, loc : usize },
-    UnexpectedChar(char, usize),
+    UnexpectedEof,
     UnknownEscape(char, usize),
+    UnknownChar(char, char, usize),
+    Aggregate(Vec<LexError>),
 }
 
 impl std::fmt::Display for LexError {
@@ -20,12 +20,18 @@ impl std::fmt::Display for LexError {
         match self {
             LexError::StringEof => write!(f, "end of file encountered mid string"),
             LexError::BlockCommentEof => write!(f, "end of file encountered mid block comment"),
-            LexError::UnexpectedEof(c) => write!(f, "end of file encountered after '{}'", c),
-            LexError::UnexpectedUnknown { before, unexpected, loc } 
-                => write!(f, "{} followed by unexpected {} at {}", before, unexpected, loc),
-            LexError::UnexpectedChar(c, n) => write!(f, "encountered unexpected {} at {}", c, n),
+            LexError::UnexpectedEof => write!(f, "unexpected end of file encountered"),
             LexError::UnknownEscape(c, n) => write!(f, "unknown escape character {} found in string at {}", c, n),
+            LexError::UnknownChar(expected, unknown, loc) => write!(f, "expected {} but found {} at {}", expected, unknown, loc),
+            LexError::Aggregate(errors) => write!(f, "encountered error list:\n{}", 
+                errors.into_iter().map(|x| format!("  {}\n", x)).collect::<Vec<_>>().join("")),
         }
+    }
+}
+
+impl From<Vec<LexError>> for LexError {
+    fn from(item : Vec<LexError>) -> Self {
+        LexError::Aggregate(item)
     }
 }
 
