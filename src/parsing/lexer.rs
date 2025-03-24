@@ -44,6 +44,7 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
     let mut tokens = vec![];
 
     while !buffer.end() {
+        whitespace(&mut buffer);
         let token = buffer.or([number])?;
         tokens.push(token);
     }
@@ -194,10 +195,16 @@ fn minus(input : &mut Buffer<char>) -> Result<char, LexError> {
 
 fn whitespace(input : &mut Buffer<char>) {
     loop {
-        let result : Result<bool, LexError> = input.with_rollback(|input| 
-            Ok(input.get(LexError::UnexpectedEof)?.is_whitespace()));
+        let result = input.with_rollback(|input|
+            if input.get(LexError::UnexpectedEof)?.is_whitespace() {
+                Ok(())
+            }
+            else {
+                Err(LexError::UnexpectedEof)
+            }
+        );
 
-        if matches!(result, Err(_) | Ok(false)) {
+        if result.is_err() {
             break;
         }
     }
