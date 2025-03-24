@@ -8,7 +8,7 @@ pub enum LexError {
     StringEof, 
     UnexpectedEof,
     UnknownEscape(char, usize),
-    UnexpectedChar(&'static str, char, usize),
+    UnexpectedChar(Box<str>, char, usize),
     NumberWithMultipleDots(Box<str>, usize),
     NegativeNumberNeedsDigits(usize),
     Aggregate(Vec<LexError>),
@@ -170,6 +170,21 @@ fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
     }
 }
 
+macro_rules! lex_char {
+    ($name:ident, $target : literal) => {
+        fn $name(input : &mut Buffer<char>) -> Result<char, LexError> {
+            let index = input.index();
+            let c = input.get(LexError::UnexpectedEof)?;
+            if *c == $target {
+                Ok(*c)
+            }
+            else {
+                Err(LexError::UnexpectedChar($target.to_string().into(), *c, index))
+            }
+        }
+    }
+}
+
 fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
     let index = input.index();
     let c = input.get(LexError::UnexpectedEof)?;
@@ -177,7 +192,7 @@ fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
         Ok(*c)
     }
     else {
-        Err(LexError::UnexpectedChar("[a-zA-Z]", *c, index))
+        Err(LexError::UnexpectedChar("[a-zA-Z]".into(), *c, index))
     }
 }
 
@@ -188,7 +203,7 @@ fn underscore(input : &mut Buffer<char>) -> Result<char, LexError> {
         Ok(*c)
     }
     else {
-        Err(LexError::UnexpectedChar("_", *c, index))
+        Err(LexError::UnexpectedChar("_".into(), *c, index))
     }
 }
 
@@ -199,7 +214,7 @@ fn dot(input : &mut Buffer<char>) -> Result<char, LexError> {
         Ok(*c)
     }
     else {
-        Err(LexError::UnexpectedChar(".", *c, index))
+        Err(LexError::UnexpectedChar(".".into(), *c, index))
     }
 }
 
@@ -210,7 +225,7 @@ fn digit(input : &mut Buffer<char>) -> Result<char, LexError> {
         Ok(*c)
     }
     else {
-        Err(LexError::UnexpectedChar("[0-9]", *c, index))
+        Err(LexError::UnexpectedChar("[0-9]".into(), *c, index))
     }
 }
 
@@ -221,7 +236,7 @@ fn minus(input : &mut Buffer<char>) -> Result<char, LexError> {
         Ok(*c)
     }
     else {
-        Err(LexError::UnexpectedChar("-", *c, index))
+        Err(LexError::UnexpectedChar("-".into(), *c, index))
     }
 }
 
