@@ -20,7 +20,7 @@ impl Meta {
 #[derive(Debug)]
 pub enum Token {
     Number(Box<str>, Meta),
-    Symbol(Box<str>, usize, usize),
+    Symbol(Box<str>, Meta),
     String(Box<str>, usize, usize),
     LSquare(usize),
     RSquare(usize),
@@ -44,7 +44,7 @@ impl Token {
     pub fn error(&self) -> (usize, usize) {
         match self {
             Token::Number(_, m) => (m.start, m.end),
-            Token::Symbol(_, s, e) => (*s, *e),
+            Token::Symbol(_, m) => (m.start, m.end),
             Token::String(_, s, e) => (*s, *e),
             Token::LSquare(x) => (*x, *x),
             Token::RSquare(x) => (*x, *x),

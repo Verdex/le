@@ -154,7 +154,7 @@ fn symbol(input : &mut Buffer<char>) -> Result<Token, LexError> {
 
     let s : Box<str> = rest.into_iter().collect();
     let len = s.len();
-    Ok(Token::Symbol(s, 0, 0))
+    Ok(Token::Symbol(s, Meta::range(start, start + len)))
 }
 
 fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
@@ -460,7 +460,7 @@ mod test {
 
     fn proj_sym(input : &Token) -> String {
         match input {
-            Token::Symbol(x, _, _) => x.to_string(),
+            Token::Symbol(x, _) => x.to_string(),
             _ => panic!("not a symbol"),
         }
     }

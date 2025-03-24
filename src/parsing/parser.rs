@@ -67,7 +67,7 @@ macro_rules! pred_match {
 macro_rules! is_keyword {
     ($name:expr) => { Match::pred(|x, _| 
         match x { 
-            Token::Symbol(name, _, _) if **name == *$name => true,
+            Token::Symbol(name, _) if **name == *$name => true,
             _ => false,
         }) 
     }
@@ -89,13 +89,13 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                       );
     
     let fun_param = Rule::new( "fun_param"
-                             , vec![ pred_match!(Token::Symbol(_, _, _))
+                             , vec![ pred_match!(Token::Symbol(_, _))
                                    , pred_match!(Token::Colon(_))
                                    , Match::rule(&ttype) 
                                    ]
                              , transform!(name, _, ttype, {
                                     let name = proj!( name.unwrap().unwrap()
-                                                    , Token::Symbol(n, _, _)
+                                                    , Token::Symbol(n, _)
                                                     , Box::new(Ast::Symbol(n.clone()))
                                                     );
                                     let ttype = Box::new(ttype.unwrap_result().unwrap());
@@ -105,7 +105,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     let fun = Rule::new( "fun" 
                        , vec![ is_keyword!("fun") 
-                             , pred_match!(Token::Symbol(_, _, _))
+                             , pred_match!(Token::Symbol(_, _))
                              , pred_match!(Token::LParen(_))
                              , Match::rule(&param_list)
                              , pred_match!(Token::RParen(_))
@@ -119,7 +119,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                        , transform!(_, name, _, params, _, _, ret_type, _, body, _, {
 
                             let name = proj!( name.unwrap().unwrap()
-                                            , Token::Symbol(n, _, _)
+                                            , Token::Symbol(n, _)
                                             , Box::new(Ast::Symbol(n.clone()))
                                             );
                             let params = Box::new(params.unwrap_result().unwrap());
@@ -154,10 +154,10 @@ fn expr_rule() -> Rc<Rule<Token, Ast>> {
                           }));
 
     let variable = Rule::new( "variable"
-                            , vec![pred_match!(Token::Symbol(_, _, _))]
+                            , vec![pred_match!(Token::Symbol(_, _))]
                             , transform!(x, { 
                                 proj!( x.unwrap().unwrap()
-                                     , Token::Symbol(n, _, _)
+                                     , Token::Symbol(n, _)
                                      , Ok(Ast::Variable(Box::new(Ast::Symbol(n.clone()))))
                                      )
                             }));
@@ -212,10 +212,10 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
     // be just as easy and doesn't require a bunch of special handling.
 
     let simple_type = Rule::new( "simple_type"
-                               , vec![pred_match!(Token::Symbol(_, _, _))]
+                               , vec![pred_match!(Token::Symbol(_, _))]
                                , transform!( name, {
                                     let name = proj!( name.unwrap().unwrap()
-                                                    , Token::Symbol(n, _, _)
+                                                    , Token::Symbol(n, _)
                                                     , Box::new(Ast::Symbol(n.clone()))
                                                     );
                                     Ok(Ast::SimpleType(name))
@@ -229,14 +229,14 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
     let type_list = comma_list_gen("type_list", &ttype_redirect);
 
     let index_type = Rule::new( "index_type"
-                              , vec![ pred_match!(Token::Symbol(_, _, _)) 
+                              , vec![ pred_match!(Token::Symbol(_, _)) 
                                     , pred_match!(Token::LAngle(_))
                                     , Match::rule(&type_list)
                                     , pred_match!(Token::RAngle(_))
                                     ]
                               , transform!( name, _, params, {
                                     let name = proj!( name.unwrap().unwrap()
-                                                    , Token::Symbol(n, _, _)
+                                                    , Token::Symbol(n, _)
                                                     , Box::new(Ast::Symbol(n.clone()))
                                                     );
                                     let params = Box::new(params.unwrap_result().unwrap());
