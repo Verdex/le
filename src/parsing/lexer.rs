@@ -10,6 +10,7 @@ pub enum LexError {
     UnknownEscape(char, usize),
     UnexpectedChar(&'static str, char, usize),
     NumberWithMultipleDots(Box<str>, usize),
+    NegativeNumberNeedsDigits(usize),
     Aggregate(Vec<LexError>),
 }
 
@@ -23,6 +24,7 @@ impl std::fmt::Display for LexError {
             LexError::UnexpectedChar(expected, unknown, loc) => write!(f, "expected {} but found {} at {}", expected, unknown, loc),
             LexError::NumberWithMultipleDots(number, loc) => 
                 write!(f, "encountered number with too many decimal points: {} at {}", number, loc),
+            LexError::NegativeNumberNeedsDigits(loc) => write!(f, "a negative number needs digits at: {}", loc),
             LexError::Aggregate(errors) => write!(f, "encountered error list:\n{}", 
                 errors.into_iter().map(|x| format!("  {}\n", x)).collect::<Vec<_>>().join("")),
         }
@@ -152,6 +154,9 @@ fn number<'a>(input : &mut Buffer<'a, char>) -> Result<Token, LexError> {
 
     if rest.iter().filter(|x| **x == '.').count() > 1 {
         Err(LexError::NumberWithMultipleDots(rest.into_iter().collect(), start))
+    }
+    else if rest.len() == 1 && first == '-' {
+        Err(LexError::NegativeNumberNeedsDigits(start))
     }
     else {
         let n : Box<str> = rest.into_iter().collect();
