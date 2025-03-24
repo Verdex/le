@@ -185,6 +185,10 @@ macro_rules! lex_char {
     }
 }
 
+lex_char!(underscore, '_');
+lex_char!(dot, '.');
+lex_char!(minus, '-');
+
 fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
     let index = input.index();
     let c = input.get(LexError::UnexpectedEof)?;
@@ -195,10 +199,6 @@ fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
         Err(LexError::UnexpectedChar("[a-zA-Z]".into(), *c, index))
     }
 }
-
-lex_char!(underscore, '_');
-lex_char!(dot, '.');
-lex_char!(minus, '-');
 
 fn digit(input : &mut Buffer<char>) -> Result<char, LexError> {
     let index = input.index();
