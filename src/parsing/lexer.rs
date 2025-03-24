@@ -47,7 +47,7 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
 
     while !buffer.end() {
         whitespace(&mut buffer);
-        let token = buffer.or([number])?;
+        let token = buffer.or([symbol, number])?;
         tokens.push(token);
     }
 
