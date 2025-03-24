@@ -146,14 +146,20 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
     Ok(ts)*/
 }
 
-/*fn symbol(input : &mut Buffer<char>) -> Result<Token, LexError> {
+fn symbol(input : &mut Buffer<char>) -> Result<Token, LexError> {
     let start = input.index();
+    let first = input.or([letter, underscore])?;
+    let mut rest = input.list(|input| input.or([letter, digit, underscore]))?;
+    rest.insert(0, first);
 
-}*/
+    let s : Box<str> = rest.into_iter().collect();
+    let len = s.len();
+    Ok(Token::Symbol(s, 0, 0))
+}
 
 fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
     let start = input.index();
-    let first = input.or([minus, digit])?;
+    let first = input.or([digit, minus])?;
     let mut rest = input.list(|input| input.or([digit, dot]))?;
     rest.insert(0, first);
 
@@ -165,8 +171,8 @@ fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
     }
     else {
         let n : Box<str> = rest.into_iter().collect();
-        let end = n.len();
-        Ok(Token::Number(n, Meta::range(start, end)))
+        let len = n.len();
+        Ok(Token::Number(n, Meta::range(start, start + len)))
     }
 }
 
