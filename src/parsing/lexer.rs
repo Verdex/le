@@ -192,6 +192,17 @@ fn minus(input : &mut Buffer<char>) -> Result<char, LexError> {
     }
 }
 
+fn whitespace(input : &mut Buffer<char>) {
+    loop {
+        let result : Result<bool, LexError> = input.with_rollback(|input| 
+            Ok(input.get(LexError::UnexpectedEof)?.is_whitespace()));
+
+        if matches!(result, Err(_) | Ok(false)) {
+            break;
+        }
+    }
+}
+
 /*
 fn string(first : usize, input : &mut I) -> Result<Token, LexError> {
     let last;
