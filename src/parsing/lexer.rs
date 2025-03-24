@@ -196,27 +196,9 @@ fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
     }
 }
 
-fn underscore(input : &mut Buffer<char>) -> Result<char, LexError> {
-    let index = input.index();
-    let c = input.get(LexError::UnexpectedEof)?;
-    if *c == '_' {
-        Ok(*c)
-    }
-    else {
-        Err(LexError::UnexpectedChar("_".into(), *c, index))
-    }
-}
-
-fn dot(input : &mut Buffer<char>) -> Result<char, LexError> {
-    let index = input.index();
-    let c = input.get(LexError::UnexpectedEof)?;
-    if *c == '.' {
-        Ok(*c)
-    }
-    else {
-        Err(LexError::UnexpectedChar(".".into(), *c, index))
-    }
-}
+lex_char!(underscore, '_');
+lex_char!(dot, '.');
+lex_char!(minus, '-');
 
 fn digit(input : &mut Buffer<char>) -> Result<char, LexError> {
     let index = input.index();
@@ -226,17 +208,6 @@ fn digit(input : &mut Buffer<char>) -> Result<char, LexError> {
     }
     else {
         Err(LexError::UnexpectedChar("[0-9]".into(), *c, index))
-    }
-}
-
-fn minus(input : &mut Buffer<char>) -> Result<char, LexError> {
-    let index = input.index();
-    let c = input.get(LexError::UnexpectedEof)?;
-    if *c == '-' {
-        Ok(*c)
-    }
-    else {
-        Err(LexError::UnexpectedChar("-".into(), *c, index))
     }
 }
 
