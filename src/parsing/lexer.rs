@@ -146,7 +146,12 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
     Ok(ts)*/
 }
 
-fn number<'a>(input : &mut Buffer<'a, char>) -> Result<Token, LexError> {
+/*fn symbol(input : &mut Buffer<char>) -> Result<Token, LexError> {
+    let start = input.index();
+
+}*/
+
+fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
     let start = input.index();
     let first = input.or([minus, digit])?;
     let mut rest = input.list(|input| input.or([digit, dot]))?;
@@ -162,6 +167,28 @@ fn number<'a>(input : &mut Buffer<'a, char>) -> Result<Token, LexError> {
         let n : Box<str> = rest.into_iter().collect();
         let end = n.len();
         Ok(Token::Number(n, Meta::range(start, end)))
+    }
+}
+
+fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
+    let index = input.index();
+    let c = input.get(LexError::UnexpectedEof)?;
+    if c.is_alphabetic() {
+        Ok(*c)
+    }
+    else {
+        Err(LexError::UnexpectedChar("[a-zA-Z]", *c, index))
+    }
+}
+
+fn underscore(input : &mut Buffer<char>) -> Result<char, LexError> {
+    let index = input.index();
+    let c = input.get(LexError::UnexpectedEof)?;
+    if *c == '_' {
+        Ok(*c)
+    }
+    else {
+        Err(LexError::UnexpectedChar("_", *c, index))
     }
 }
 
