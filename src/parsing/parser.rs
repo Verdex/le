@@ -109,7 +109,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                              , pred_match!(Token::LParen(_))
                              , Match::rule(&param_list)
                              , pred_match!(Token::RParen(_))
-                             , pred_match!(Token::RArrow(_, _))
+                             , pred_match!(Token::RArrow(_))
                              , Match::rule(&ttype)
                              , pred_match!(Token::LCurl(_))
                              , Match::list(&top_level_redirect)
