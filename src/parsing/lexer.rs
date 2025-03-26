@@ -2,6 +2,33 @@
 use super::buffer::Buffer;
 use crate::data::{ Meta, Token };
 
+macro_rules! lex_char {
+    ($name:ident, $target : literal) => {
+        fn $name(input : &mut Buffer<char>) -> Result<char, LexError> {
+            let index = input.index();
+            let c = input.get(LexError::UnexpectedEof)?;
+            if *c == $target {
+                Ok(*c)
+            }
+            else {
+                Err(LexError::UnexpectedChar($target.to_string().into(), *c, index))
+            }
+        }
+    }
+}
+
+macro_rules! punct {
+    ($name:ident, $target:literal, $result:expr) => {
+        fn $name(input : &mut Buffer<char>) -> Result<Token, LexError> {
+            lex_char!(lexer, $target);
+
+            let index = input.index();
+            lexer(input)?;
+            Ok($result(index))
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum LexError {
     BlockCommentEof,
@@ -47,7 +74,24 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
 
     while !buffer.end() {
         whitespace(&mut buffer);
-        let token = buffer.or([symbol, number])?;
+        let token = buffer.or(
+            [
+                symbol, 
+                lparen,
+                rparen,
+                dot,
+                comma,
+                semicolon,
+                colon,
+                equal,
+                lsquare,
+                rsquare,
+                lcurl,
+                rcurl,
+                langle,
+                rangle,
+                number,
+            ])?;
         tokens.push(token);
     }
 
@@ -146,6 +190,20 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
     Ok(ts)*/
 }
 
+punct!(lsquare, '[', |index| Token::LSquare(Meta::single(index)));
+punct!(rsquare, ']', |index| Token::RSquare(Meta::single(index)));
+punct!(lcurl, '{', |index| Token::LCurl(Meta::single(index)));
+punct!(rcurl, '}', |index| Token::RCurl(Meta::single(index)));
+punct!(langle, '<', |index| Token::LAngle(Meta::single(index)));
+punct!(rangle, '>', |index| Token::RAngle(Meta::single(index)));
+punct!(lparen, '(', |index| Token::LParen(Meta::single(index)));
+punct!(rparen, ')', |index| Token::RParen(Meta::single(index)));
+punct!(dot, '.', |index| Token::Dot(Meta::single(index)));
+punct!(comma, ',', |index| Token::Comma(Meta::single(index)));
+punct!(semicolon, ';', |index| Token::Semicolon(Meta::single(index)));
+punct!(colon, ':', |index| Token::Colon(Meta::single(index)));
+punct!(equal, '=', |index| Token::Equal(Meta::single(index)));
+
 fn symbol(input : &mut Buffer<char>) -> Result<Token, LexError> {
     let start = input.index();
     let first = input.or([letter, underscore])?;
@@ -158,6 +216,8 @@ fn symbol(input : &mut Buffer<char>) -> Result<Token, LexError> {
 }
 
 fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
+    lex_char!(dot, '.');
+
     let start = input.index();
     let first = input.or([digit, minus])?;
     let mut rest = input.list(|input| input.or([digit, dot]))?;
@@ -176,23 +236,7 @@ fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
     }
 }
 
-macro_rules! lex_char {
-    ($name:ident, $target : literal) => {
-        fn $name(input : &mut Buffer<char>) -> Result<char, LexError> {
-            let index = input.index();
-            let c = input.get(LexError::UnexpectedEof)?;
-            if *c == $target {
-                Ok(*c)
-            }
-            else {
-                Err(LexError::UnexpectedChar($target.to_string().into(), *c, index))
-            }
-        }
-    }
-}
-
 lex_char!(underscore, '_');
-lex_char!(dot, '.');
 lex_char!(minus, '-');
 
 fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
