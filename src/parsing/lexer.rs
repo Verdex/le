@@ -467,7 +467,7 @@ mod test {
 
     fn proj_str(input : &Token) -> String {
         match input {
-            Token::String(x, _, _) => x.to_string(),
+            Token::String(x, _) => x.to_string(),
             _ => panic!("not a string"),
         }
     }
@@ -551,7 +551,7 @@ mod test {
 
         assert_eq!(output.len(), 2);
         assert!(matches!(output[0], Token::Number(_, _)));
-        assert!(matches!(output[1], Token::RArrow(_, _)));
+        assert!(matches!(output[1], Token::RArrow(_)));
 
         assert_eq!(proj_num(&output[0]), "25.");
     }
@@ -561,9 +561,9 @@ mod test {
         let output = lex("->==>()[]{}<>,:;.".into()).unwrap();
 
         assert_eq!(output.len(), 15);
-        assert!(matches!(output[0], Token::RArrow(_, _)));
+        assert!(matches!(output[0], Token::RArrow(_)));
         assert!(matches!(output[1], Token::Equal(_)));
-        assert!(matches!(output[2], Token::R2Arrow(_, _)));
+        assert!(matches!(output[2], Token::R2Arrow(_)));
         assert!(matches!(output[3], Token::LParen(_)));
         assert!(matches!(output[4], Token::RParen(_)));
         assert!(matches!(output[5], Token::LSquare(_)));
@@ -582,7 +582,7 @@ mod test {
     fn should_lex_triangle() {
         fn a(t : &Token, p : usize) {
             match t {
-                Token::Triangle { param, .. } => {
+                Token::Triangle(param, _) => {
                     assert_eq!(*param, p);
                 },
                 _ => { panic!("Encountered unexpected token"); },
