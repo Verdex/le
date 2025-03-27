@@ -83,6 +83,8 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
                 comma,
                 semicolon,
                 colon,
+                r2arrow,
+                rarrow,
                 equal,
                 lsquare,
                 rsquare,
@@ -203,6 +205,26 @@ punct!(comma, ',', |index| Token::Comma(Meta::single(index)));
 punct!(semicolon, ';', |index| Token::Semicolon(Meta::single(index)));
 punct!(colon, ':', |index| Token::Colon(Meta::single(index)));
 punct!(equal, '=', |index| Token::Equal(Meta::single(index)));
+
+fn r2arrow(input : &mut Buffer<char>) -> Result<Token, LexError> {
+    lex_char!(minus, '=');
+    lex_char!(rangle, '>');
+
+    let index = input.index();
+    minus(input)?;
+    rangle(input)?;
+    Ok(Token::R2Arrow(Meta::range(index, index + 1)))
+}
+
+fn rarrow(input : &mut Buffer<char>) -> Result<Token, LexError> {
+    lex_char!(minus, '-');
+    lex_char!(rangle, '>');
+
+    let index = input.index();
+    minus(input)?;
+    rangle(input)?;
+    Ok(Token::RArrow(Meta::range(index, index + 1)))
+}
 
 fn symbol(input : &mut Buffer<char>) -> Result<Token, LexError> {
     let start = input.index();
