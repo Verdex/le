@@ -80,6 +80,7 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
                 lparen,
                 rparen,
                 dot,
+                triangle,
                 comma,
                 semicolon,
                 colon,
@@ -224,6 +225,24 @@ fn rarrow(input : &mut Buffer<char>) -> Result<Token, LexError> {
     minus(input)?;
     rangle(input)?;
     Ok(Token::RArrow(Meta::range(index, index + 1)))
+}
+
+fn triangle(input : &mut Buffer<char>) -> Result<Token, LexError> {
+    lex_char!(bar, '|');
+    lex_char!(rangle, '>');
+
+    let index = input.index();
+    bar(input)?;
+    let ds = input.list(digit)?;
+    let number : usize = if ds.len() > 0 {
+        ds.iter().collect::<String>().parse().unwrap()
+    }
+    else {
+        0
+    };
+    rangle(input)?;
+
+    Ok(Token::Triangle(number, Meta::range(index, index + 1 + ds.len())))
 }
 
 fn symbol(input : &mut Buffer<char>) -> Result<Token, LexError> {
