@@ -73,9 +73,16 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
     let mut tokens = vec![];
 
     while !buffer.end() {
-        whitespace(&mut buffer);
-        line_comment(&mut buffer);
-        block_comment(&mut buffer)?;
+
+        loop {
+            let index = buffer.index();
+            whitespace(&mut buffer);
+            line_comment(&mut buffer);
+            block_comment(&mut buffer)?;
+            if index == buffer.index() {
+                break;
+            }
+        }
 
         if buffer.end() { break; }
 
@@ -632,6 +639,15 @@ mod test {
             Token::String(x, _) => x.to_string(),
             _ => panic!("not a string"),
         }
+    }
+
+    #[test]
+    fn should_handle_comment_order() {
+        let output = lex(" /* */ // 
+        100".into()).unwrap();
+
+        assert_eq!(output.len(), 1);
+        assert_eq!(proj_num(&output[0]), "100");
     }
 
     #[test]
