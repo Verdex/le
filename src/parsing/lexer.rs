@@ -289,6 +289,96 @@ fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
     }
 }
 
+fn string(first : usize, input : &mut I) -> Result<Token, LexError> {
+    let last;
+    let mut xs = vec![];
+    let mut escape = false;
+    loop {
+        match input.next() {
+            None => { return Err(LexError::StringEof); },
+            Some((_, '"')) if escape => {
+                xs.push('"');
+                escape = false;
+            },
+            Some((_, '0')) if escape => {
+                xs.push('\0');
+                escape = false;
+            },
+            Some((_, 't')) if escape => {
+                xs.push('\t');
+                escape = false;
+            },
+            Some((_, 'r')) if escape => {
+                xs.push('\r');
+                escape = false;
+            },
+            Some((_, 'n')) if escape => {
+                xs.push('\n');
+                escape = false;
+            },
+            Some((_, '\\')) if escape => {
+                xs.push('\\');
+                escape = false;
+            },
+            Some((_, '\\')) => {
+                escape = true;
+            },
+            Some((n, c)) if escape => { return Err(LexError::UnknownEscape(c, n)); },
+            Some((n, '"')) => { 
+                last = n; 
+                break; 
+            },
+            Some((_, c)) => {
+                xs.push(c);
+            },
+        }
+    }
+
+    Ok(Token::String(xs.into_iter().collect::<String>().into(), first, last))
+}
+
+lex_char!(underscore, '_');
+lex_char!(minus, '-');
+
+fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
+    let index = input.index();
+    let c = input.get(LexError::UnexpectedEof)?;
+    if c.is_alphabetic() {
+        Ok(*c)
+    }
+    else {
+        Err(LexError::UnexpectedChar("[a-zA-Z]".into(), *c, index))
+    }
+}
+
+fn digit(input : &mut Buffer<char>) -> Result<char, LexError> {
+    let index = input.index();
+    let c = input.get(LexError::UnexpectedEof)?;
+    if c.is_digit(10) {
+        Ok(*c)
+    }
+    else {
+        Err(LexError::UnexpectedChar("[0-9]".into(), *c, index))
+    }
+}
+
+fn whitespace(input : &mut Buffer<char>) {
+    loop {
+        let result = input.with_rollback(|input|
+            if input.get(LexError::UnexpectedEof)?.is_whitespace() {
+                Ok(())
+            }
+            else {
+                Err(LexError::UnexpectedEof)
+            }
+        );
+
+        if result.is_err() {
+            break;
+        }
+    }
+}
+
 fn line_comment(input : &mut Buffer<char>) {
     lex_char!(slash, '/');
 
@@ -358,48 +448,6 @@ fn block_comment(input : &mut Buffer<char>) -> Result<(), LexError> {
         Ok(_) => Ok(()),
         Err(e @ LexError::BlockCommentEof) => Err(e),
         Err(_) => Ok(()),
-    }
-}
-
-lex_char!(underscore, '_');
-lex_char!(minus, '-');
-
-fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
-    let index = input.index();
-    let c = input.get(LexError::UnexpectedEof)?;
-    if c.is_alphabetic() {
-        Ok(*c)
-    }
-    else {
-        Err(LexError::UnexpectedChar("[a-zA-Z]".into(), *c, index))
-    }
-}
-
-fn digit(input : &mut Buffer<char>) -> Result<char, LexError> {
-    let index = input.index();
-    let c = input.get(LexError::UnexpectedEof)?;
-    if c.is_digit(10) {
-        Ok(*c)
-    }
-    else {
-        Err(LexError::UnexpectedChar("[0-9]".into(), *c, index))
-    }
-}
-
-fn whitespace(input : &mut Buffer<char>) {
-    loop {
-        let result = input.with_rollback(|input|
-            if input.get(LexError::UnexpectedEof)?.is_whitespace() {
-                Ok(())
-            }
-            else {
-                Err(LexError::UnexpectedEof)
-            }
-        );
-
-        if result.is_err() {
-            break;
-        }
     }
 }
 
