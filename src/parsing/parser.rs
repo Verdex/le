@@ -67,7 +67,7 @@ macro_rules! pred_match {
 macro_rules! is_keyword {
     ($name:expr) => { Match::pred(|x, _| 
         match x { 
-            Token::Symbol(name, _, _) if **name == *$name => true,
+            Token::Symbol(name, _) if **name == *$name => true,
             _ => false,
         }) 
     }
@@ -89,13 +89,13 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                                       );
     
     let fun_param = Rule::new( "fun_param"
-                             , vec![ pred_match!(Token::Symbol(_, _, _))
+                             , vec![ pred_match!(Token::Symbol(_, _))
                                    , pred_match!(Token::Colon(_))
                                    , Match::rule(&ttype) 
                                    ]
                              , transform!(name, _, ttype, {
                                     let name = proj!( name.unwrap().unwrap()
-                                                    , Token::Symbol(n, _, _)
+                                                    , Token::Symbol(n, _)
                                                     , Box::new(Ast::Symbol(n.clone()))
                                                     );
                                     let ttype = Box::new(ttype.unwrap_result().unwrap());
@@ -105,11 +105,11 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     let fun = Rule::new( "fun" 
                        , vec![ is_keyword!("fun") 
-                             , pred_match!(Token::Symbol(_, _, _))
+                             , pred_match!(Token::Symbol(_, _))
                              , pred_match!(Token::LParen(_))
                              , Match::rule(&param_list)
                              , pred_match!(Token::RParen(_))
-                             , pred_match!(Token::RArrow(_, _))
+                             , pred_match!(Token::RArrow(_))
                              , Match::rule(&ttype)
                              , pred_match!(Token::LCurl(_))
                              , Match::list(&top_level_redirect)
@@ -119,7 +119,7 @@ fn init_rules() -> Rc<Rule<Token, Ast>> {
                        , transform!(_, name, _, params, _, _, ret_type, _, body, _, {
 
                             let name = proj!( name.unwrap().unwrap()
-                                            , Token::Symbol(n, _, _)
+                                            , Token::Symbol(n, _)
                                             , Box::new(Ast::Symbol(n.clone()))
                                             );
                             let params = Box::new(params.unwrap_result().unwrap());
@@ -145,19 +145,19 @@ fn expr_rule() -> Rc<Rule<Token, Ast>> {
     let redirect_list = comma_list_gen("redirect_list", &redirect);
 
     let number = Rule::new( "number"
-                          , vec![pred_match!(Token::Number(_, _, _))]
+                          , vec![pred_match!(Token::Number(_, _))]
                           , transform!(result, {
                                 proj!( result.unwrap().unwrap()
-                                     , Token::Number(n, _, _)
+                                     , Token::Number(n, _)
                                      , Ok(Ast::Number(n.clone()))
                                      )
                           }));
 
     let variable = Rule::new( "variable"
-                            , vec![pred_match!(Token::Symbol(_, _, _))]
+                            , vec![pred_match!(Token::Symbol(_, _))]
                             , transform!(x, { 
                                 proj!( x.unwrap().unwrap()
-                                     , Token::Symbol(n, _, _)
+                                     , Token::Symbol(n, _)
                                      , Ok(Ast::Variable(Box::new(Ast::Symbol(n.clone()))))
                                      )
                             }));
@@ -212,10 +212,10 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
     // be just as easy and doesn't require a bunch of special handling.
 
     let simple_type = Rule::new( "simple_type"
-                               , vec![pred_match!(Token::Symbol(_, _, _))]
+                               , vec![pred_match!(Token::Symbol(_, _))]
                                , transform!( name, {
                                     let name = proj!( name.unwrap().unwrap()
-                                                    , Token::Symbol(n, _, _)
+                                                    , Token::Symbol(n, _)
                                                     , Box::new(Ast::Symbol(n.clone()))
                                                     );
                                     Ok(Ast::SimpleType(name))
@@ -229,14 +229,14 @@ fn ttype_rule() -> Rc<Rule<Token, Ast>> {
     let type_list = comma_list_gen("type_list", &ttype_redirect);
 
     let index_type = Rule::new( "index_type"
-                              , vec![ pred_match!(Token::Symbol(_, _, _)) 
+                              , vec![ pred_match!(Token::Symbol(_, _)) 
                                     , pred_match!(Token::LAngle(_))
                                     , Match::rule(&type_list)
                                     , pred_match!(Token::RAngle(_))
                                     ]
                               , transform!( name, _, params, {
                                     let name = proj!( name.unwrap().unwrap()
-                                                    , Token::Symbol(n, _, _)
+                                                    , Token::Symbol(n, _)
                                                     , Box::new(Ast::Symbol(n.clone()))
                                                     );
                                     let params = Box::new(params.unwrap_result().unwrap());
@@ -288,7 +288,7 @@ mod test {
     #[test]
     fn should_parse_fun_with_complex_index_type() {
         let s = "fun name() -> T3<T1<T4>, T2, T5> { }";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -314,7 +314,7 @@ mod test {
     #[test]
     fn should_parse_fun_with_index_type() {
         let s = "fun name() -> T3<T1> { }";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -335,7 +335,7 @@ mod test {
     #[test]
     fn should_parse_zero_param_fun() {
         let s = "fun name() -> T3 { }";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -354,7 +354,7 @@ mod test {
     #[test]
     fn should_parse_single_param_fun() {
         let s = "fun name(x : T) -> T3 { }";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -373,7 +373,7 @@ mod test {
     #[test]
     fn should_parse_fun() {
         let s = "fun name(x : T1, y : T2) -> T3 { }";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -394,7 +394,7 @@ mod test {
     #[test]
     fn should_parse_variable() {
         let s = "var";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -410,7 +410,7 @@ mod test {
     #[test]
     fn should_parse_fun_call_with_complex_param() {
         let s = "blah(ah(b()), c, d()(e, i))()";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -426,7 +426,7 @@ mod test {
     #[test]
     fn should_parse_fun_call_with_multiple_param() {
         let s = "blah(val, two, other)";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -445,7 +445,7 @@ mod test {
     #[test]
     fn should_parse_fun_call_with_param() {
         let s = "blah(val)";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -462,7 +462,7 @@ mod test {
     #[test]
     fn should_parse_fun_call_call() {
         let s = "blah()()";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -479,7 +479,7 @@ mod test {
     #[test]
     fn should_parse_fun_call() {
         let s = "blah()";
-        let input = lexer::lex(&mut s.char_indices()).unwrap();
+        let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 
@@ -494,7 +494,7 @@ mod test {
 
     #[test]
     fn should_parse_number() {
-        let input = lexer::lex(&mut "100".char_indices()).unwrap();
+        let input = lexer::lex("100".into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
 

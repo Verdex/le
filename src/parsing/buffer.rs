@@ -11,11 +11,11 @@ impl<'a, T> Clone for Buffer<'a, T> {
 }
 
 impl<'a, T> Buffer<'a, T> {
-    fn new(input : &'a [T]) -> Buffer<'a, T> {
+    pub fn new(input : &'a [T]) -> Buffer<'a, T> {
         Buffer { input, index: 0 }
     }
 
-    fn or<S, E, const N : usize>(&mut self, targets : [fn(&mut Buffer<'a, T>) -> Result<S, E>; N]) -> Result<S, Vec<E>> {
+    pub fn or<S, E, const N : usize>(&mut self, targets : [for<'b> fn(&mut Buffer<'b, T>) -> Result<S, E>; N]) -> Result<S, Vec<E>> {
         let mut errors = vec![];
         for target in targets {
             let mut ops = self.clone();
@@ -31,18 +31,18 @@ impl<'a, T> Buffer<'a, T> {
         Err(errors)
     }
 
-    fn option<S, E, F : FnOnce(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Option<S>, E> {
+    pub fn option<S, E, F : FnOnce(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<Option<S>, E> {
             let mut ops = self.clone();
             match f(&mut ops) {
                 Ok(v) => {
                     self.index = ops.index;
                     Ok(Some(v))
                 },
-                Err(e) => Ok(None),
+                Err(_) => Ok(None),
             }
     }
 
-    fn list<S, E, F : FnMut(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, mut f : F) -> Result<Vec<S>, E> {
+    pub fn list<S, E, F : FnMut(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, mut f : F) -> Result<Vec<S>, E> {
         let mut rets = vec![];
         loop {
             let mut ops = self.clone();
@@ -51,13 +51,13 @@ impl<'a, T> Buffer<'a, T> {
                     self.index = ops.index;
                     rets.push(v);
                 },
-                Err(e) => { break; },
+                Err(_) => { break; },
             }
         }
         Ok(rets)
     }
 
-    fn peek<E>(&self, e : E) -> Result<&T, E> {
+    pub fn peek<E>(&self, e : E) -> Result<&T, E> {
         if self.index < self.input.len() {
             let r = &self.input[self.index];
             Ok(r)
@@ -67,7 +67,7 @@ impl<'a, T> Buffer<'a, T> {
         }
     }
 
-    fn get<E>(&mut self, e : E) -> Result<&T, E> {
+    pub fn get<E>(&mut self, e : E) -> Result<&T, E> {
         if self.index < self.input.len() {
             let r = &self.input[self.index];
             self.index += 1;
@@ -78,7 +78,15 @@ impl<'a, T> Buffer<'a, T> {
         }
     }
 
-    fn with_rollback<S, E, F : FnOnce(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
+    pub fn end(&self) -> bool {
+        self.index >= self.input.len()
+    }
+
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
+    pub fn with_rollback<S, E, F : FnOnce(&mut Buffer<'a, T>) -> Result<S, E>>(&mut self, f : F) -> Result<S, E> {
         let mut ops = self.clone();
         let r = f(&mut ops)?;
         self.index = ops.index;
