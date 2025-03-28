@@ -38,7 +38,7 @@ impl<'a, T> Buffer<'a, T> {
                     self.index = ops.index;
                     Ok(Some(v))
                 },
-                Err(e) => Ok(None),
+                Err(_) => Ok(None),
             }
     }
 
@@ -51,7 +51,7 @@ impl<'a, T> Buffer<'a, T> {
                     self.index = ops.index;
                     rets.push(v);
                 },
-                Err(e) => { break; },
+                Err(_) => { break; },
             }
         }
         Ok(rets)

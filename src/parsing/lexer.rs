@@ -450,7 +450,7 @@ mod test {
 
     #[test]
     fn should_lex_nested_block_comment() {
-        let mut input = "/* ~
+        let input = "/* ~
         ~/*~~*/~ */";
         let output = lex(input.into()).unwrap();
 
