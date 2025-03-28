@@ -105,6 +105,7 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
                 rcurl,
                 langle,
                 rangle,
+                string,
                 number,
             ])?;
         tokens.push(token);
@@ -289,52 +290,58 @@ fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
     }
 }
 
-fn string(first : usize, input : &mut I) -> Result<Token, LexError> {
+fn string(input : &mut Buffer<char>) -> Result<Token, LexError> {
+    lex_char!(quote, '"');
+
+    let first = input.index();
+
+    quote(input)?;
+
     let last;
     let mut xs = vec![];
     let mut escape = false;
     loop {
-        match input.next() {
-            None => { return Err(LexError::StringEof); },
-            Some((_, '"')) if escape => {
+        let index = input.index();
+        match (input.get(LexError::StringEof)?, escape) {
+            ('"', true) => {
                 xs.push('"');
                 escape = false;
             },
-            Some((_, '0')) if escape => {
+            ('0', true) => {
                 xs.push('\0');
                 escape = false;
             },
-            Some((_, 't')) if escape => {
+            ('t', true) => {
                 xs.push('\t');
                 escape = false;
             },
-            Some((_, 'r')) if escape => {
+            ('r', true) => {
                 xs.push('\r');
                 escape = false;
             },
-            Some((_, 'n')) if escape => {
+            ('n', true) => {
                 xs.push('\n');
                 escape = false;
             },
-            Some((_, '\\')) if escape => {
+            ('\\', true) => {
                 xs.push('\\');
                 escape = false;
             },
-            Some((_, '\\')) => {
+            ('\\', false) => {
                 escape = true;
             },
-            Some((n, c)) if escape => { return Err(LexError::UnknownEscape(c, n)); },
-            Some((n, '"')) => { 
-                last = n; 
+            (c, true) => { return Err(LexError::UnknownEscape(*c, index)); },
+            ('"', false) => { 
+                last = index; 
                 break; 
             },
-            Some((_, c)) => {
-                xs.push(c);
+            (c, false) => {
+                xs.push(*c);
             },
         }
     }
 
-    Ok(Token::String(xs.into_iter().collect::<String>().into(), first, last))
+    Ok(Token::String(xs.into_iter().collect::<String>().into(), Meta::range(first, last)))
 }
 
 lex_char!(underscore, '_');
