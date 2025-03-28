@@ -74,6 +74,10 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
 
     while !buffer.end() {
         whitespace(&mut buffer);
+        line_comment(&mut buffer);
+
+        if buffer.end() { break; }
+
         let token = buffer.or(
             [
                 symbol, 
@@ -275,6 +279,26 @@ fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
         let len = n.len();
         Ok(Token::Number(n, Meta::range(start, start + len)))
     }
+}
+
+fn line_comment(input : &mut Buffer<char>) {
+    lex_char!(slash, '/');
+
+    let _ : Result<(), LexError> = input.with_rollback(|input| {
+
+        slash(input)?;
+        slash(input)?;
+
+        loop {
+            match input.get(()) {
+                Ok('\n' | '\r') => { break; },
+                Err(_) => { break; },
+                _ => { },
+            }
+        }
+
+        Ok(())
+    });
 }
 
 lex_char!(underscore, '_');
