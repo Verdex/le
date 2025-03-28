@@ -75,6 +75,7 @@ pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
     while !buffer.end() {
         whitespace(&mut buffer);
         line_comment(&mut buffer);
+        block_comment(&mut buffer)?;
 
         if buffer.end() { break; }
 
@@ -299,6 +300,58 @@ fn line_comment(input : &mut Buffer<char>) {
 
         Ok(())
     });
+}
+
+fn block_comment(input : &mut Buffer<char>) -> Result<(), LexError> {
+    lex_char!(slash, '/');
+    lex_char!(star, '*');
+
+    enum State {
+        StartSlash,
+        EndStar,
+        Idle,
+    }
+
+    let result : Result<(), LexError> = input.with_rollback(|input| {
+
+        slash(input)?;
+        star(input)?;
+
+        let mut state = State::Idle;
+        let mut nest_level = 1;
+
+        loop {
+            match (input.get(LexError::BlockCommentEof)?, state) {
+                ('*', State::StartSlash) => {  
+                    state = State::Idle;
+                    nest_level += 1;
+                },
+
+                ('*', _) => { state = State::EndStar; },
+
+                ('/', State::EndStar) => { 
+                    state = State::Idle;
+                    nest_level -= 1; 
+                },
+
+                ('/', _) => { state = State::StartSlash; },
+
+                _ => {
+                    state = State::Idle;
+                },
+            }
+
+            if nest_level == 0 {
+                return Ok::<(), LexError>(());
+            }
+        }
+    });
+
+    match result {
+        Ok(_) => Ok(()),
+        Err(e @ LexError::BlockCommentEof) => Err(e),
+        Err(_) => Ok(()),
+    }
 }
 
 lex_char!(underscore, '_');
