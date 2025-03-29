@@ -2,7 +2,7 @@
 use dealize::pattern::*;
 use dealize::seq::Seqable;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Meta {
     pub start : usize,
     pub end : usize,
@@ -17,7 +17,7 @@ impl Meta {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Token {
     Number(Box<str>, Meta),
     Symbol(Box<str>, Meta),
@@ -68,6 +68,8 @@ impl Token {
 
 #[derive(Debug, PartialEq)]
 pub enum Ast {
+    // TODO remove syntax list
+    // TODO simple type can use str instead of ast
     Number(Box<str>), 
     Symbol(Box<str>),
     Slot { name : Box<Ast>, ttype : Box<Ast> },

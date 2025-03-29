@@ -1,15 +1,19 @@
 
+use crate::data::{ Meta, Token, Ast };
+
+use super::buffer::Buffer;
+
 use std::error::Error;
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use dealize::jerboa::{self, Rule, Match, Capture, JerboaError};
 
-use crate::data::{ Token, Ast };
 
 #[derive(Debug)]
 enum ParseError {
-
+    UnexpectedToken(Token),
+    UnexpectedEof,
 }
 
 impl std::fmt::Display for ParseError {
@@ -27,8 +31,22 @@ thread_local!{
     static RULE : RefCell<Rc<Rule<Token, Ast>>> = RefCell::new(init_rules());
 }
 
+
+
 pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, Box<dyn Error>> {
     Ok(RULE.with_borrow(|rule| jerboa::parse(&input, Rc::clone(rule)))?)
+}
+
+fn type_sig(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+    // simple type, index type
+    fn simple(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+        match input.get(ParseError::UnexpectedEof)? {
+            Token::Symbol(s, _) => Ok(Ast::SimpleType(Box::new(Ast::Symbol(s.clone())))),
+            t => Err(ParseError::UnexpectedToken(t.clone())),
+        }
+    }
+
+    simple(input)
 }
 
 fn ret<'a>(mut results : Vec<Capture<'a, Token, Ast>>) -> Result<Ast, JerboaError> {
@@ -76,9 +94,6 @@ macro_rules! is_keyword {
 fn init_rules() -> Rc<Rule<Token, Ast>> {
 
     // TODO: generator: yield and halt
-
-    // TODO: test that this function isn't being called for each parse invocation
-    // maybe with some sort of manual pause
 
     let ttype = ttype_rule();
     let expr = expr_rule(); 
