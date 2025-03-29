@@ -68,7 +68,7 @@ impl Token {
 
 #[derive(Debug, PartialEq)]
 pub enum Ast {
-    Number(Box<str>), // TODO : should probably be a symbol instead of str
+    Number(Box<str>), 
     Symbol(Box<str>),
     Slot { name : Box<Ast>, ttype : Box<Ast> },
     SimpleType(Box<Ast>),
