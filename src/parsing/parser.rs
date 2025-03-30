@@ -9,6 +9,14 @@ use std::rc::Rc;
 
 use dealize::jerboa::{self, Rule, Match, Capture, JerboaError};
 
+macro_rules! proj {
+    ($input:ident, $target:pat, $e:expr) => {
+        match $input.get(ParseError::UnexpectedEof)? {
+            $target => Ok($e),
+            t => Err(ParseError::UnexpectedToken(t.clone())),
+        }
+    }
+}
 
 #[derive(Debug)]
 enum ParseError {
@@ -38,16 +46,31 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, Box<dyn Error>> {
 }
 
 fn type_sig(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
-    // simple type, index type
     fn simple(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
         match input.get(ParseError::UnexpectedEof)? {
             Token::Symbol(s, _) => Ok(Ast::SimpleType(Box::new(Ast::Symbol(s.clone())))),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
     }
+    fn index_end(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+        proj!(input, Token::LAngle(_), ())?;
+        let first = type_sig(input)?;
+        let mut rest = input.list(|input| {
+            proj!(input, Token::Comma(_), ())?;
+            type_sig(input)
+        })?;
+        proj!(input, Token::RAngle(_), ())?;
+        rest.insert(0, first);
+        Ok(Ast::SyntaxList(rest))
+    }
 
-    simple(input)
+    let s = simple(input)?;
+    match index_end(input) {
+        Ok(index) => Ok(Ast::IndexType{ name: Box::new(s), params: Box::new(index) }),
+        Err(_) => Ok(s),
+    }
 }
+
 
 fn ret<'a>(mut results : Vec<Capture<'a, Token, Ast>>) -> Result<Ast, JerboaError> {
     Ok(results.remove(0).unwrap_result().unwrap())
