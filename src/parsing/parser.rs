@@ -99,9 +99,27 @@ fn type_sig(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
 }
 
 fn fun(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+    fn param(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+        let n = proj!(input, Token::Symbol(n, _), Ast::Symbol(n.clone()))?;
+        proj!(input, Token::Colon(_), ())?;
+        let t = type_sig(input)?;
+        Ok(Ast::Slot { name: Box::new(n), ttype: Box::new(t) })
+    }
+
     proj!(input, Token::Symbol(n, _) if **n == *"fun", ())?;
     let name = proj!(input, Token::Symbol(n, _), Ast::Symbol(n.clone()))?;
     proj!(input, Token::LParen(_), ())?;
+    let params = match input.option(|input| param(input))? {
+        Some(first) => {
+            let mut rest = input.list(|input| {
+                proj!(input, Token::Comma(_), ())?;
+                param(input)
+            })?;
+            rest.insert(0, first);
+            rest
+        },
+        None => vec![],
+    };
     proj!(input, Token::RParen(_), ())?;
     proj!(input, Token::RArrow(_), ())?;
     let t = type_sig(input)?;
@@ -110,7 +128,7 @@ fn fun(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
 
     Ok(Ast::Function { 
         name: Box::new(name), 
-        params: Box::new(Ast::SyntaxList(vec![])),
+        params: Box::new(Ast::SyntaxList(params)),
         return_type: Box::new(t),
         body: Box::new(Ast::SyntaxList(vec![])),
     })
