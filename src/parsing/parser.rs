@@ -91,6 +91,7 @@ fn type_sig(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
         })
     }
 
+    // TODO a bunch of the stuff here can be cleaned up after syntax list is removed
     let s = simple(input)?;
     match (s, index_end(input)) {
         (Ast::SimpleType(n), Ok(index)) => Ok(Ast::IndexType{ name: Box::new(*n), params: Box::new(index) }),
