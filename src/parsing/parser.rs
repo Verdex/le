@@ -25,9 +25,10 @@ macro_rules! proj {
 }
 
 #[derive(Debug)]
-enum ParseError {
+pub enum ParseError {
     UnexpectedToken(Token),
     UnexpectedEof,
+    Aggregate(Vec<ParseError>),
 }
 
 impl std::fmt::Display for ParseError {
@@ -41,14 +42,32 @@ impl std::fmt::Display for ParseError {
 
 impl Error for ParseError { }
 
+impl From<Vec<ParseError>> for ParseError{
+    fn from(item : Vec<ParseError>) -> Self {
+        ParseError::Aggregate(item)
+    }
+}
+
 thread_local!{
     static RULE : RefCell<Rc<Rule<Token, Ast>>> = RefCell::new(init_rules());
 }
 
 
 
-pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, Box<dyn Error>> {
-    Ok(RULE.with_borrow(|rule| jerboa::parse(&input, Rc::clone(rule)))?)
+pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
+    let mut buffer = Buffer::new(&input);
+    let mut top_level = vec![];
+
+    while !buffer.end() {
+
+        let item = buffer.or(
+            [
+                fun
+            ])?;
+        top_level.push(item);
+    }
+
+    Ok(top_level)
 }
 
 fn type_sig(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
@@ -59,15 +78,17 @@ fn type_sig(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
         }
     }
     fn index_end(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
-        proj!(input, Token::LAngle(_), ())?;
-        let first = type_sig(input)?;
-        let mut rest = input.list(|input| {
-            proj!(input, Token::Comma(_), ())?;
-            type_sig(input)
-        })?;
-        proj!(input, Token::RAngle(_), ())?;
-        rest.insert(0, first);
-        Ok(Ast::SyntaxList(rest))
+        input.with_rollback(|input| {
+            proj!(input, Token::LAngle(_), ())?;
+            let first = type_sig(input)?;
+            let mut rest = input.list(|input| {
+                proj!(input, Token::Comma(_), ())?;
+                type_sig(input)
+            })?;
+            proj!(input, Token::RAngle(_), ())?;
+            rest.insert(0, first);
+            Ok(Ast::SyntaxList(rest))
+        })
     }
 
     let s = simple(input)?;
