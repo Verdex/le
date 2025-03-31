@@ -15,11 +15,18 @@ macro_rules! proj {
             $target => Ok($e),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
-    }
+    };
+    ($input:ident, $target:pat if $p:expr, $e:expr) => {
+        match $input.get(ParseError::UnexpectedEof)? {
+            $target if $p => Ok($e),
+            t => Err(ParseError::UnexpectedToken(t.clone())),
+        }
+    };
 }
 
 #[derive(Debug)]
 enum ParseError {
+    UnexpectedSymbol(Meta),
     UnexpectedToken(Token),
     UnexpectedEof,
 }
@@ -71,6 +78,23 @@ fn type_sig(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
     }
 }
 
+fn fun(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+    proj!(input, Token::Symbol(n, _) if **n == *"fun", ())?;
+    let name = proj!(input, Token::Symbol(n, _), Ast::Symbol(n.clone()))?;
+    proj!(input, Token::LParen(_), ())?;
+    proj!(input, Token::RParen(_), ())?;
+    proj!(input, Token::RArrow(_), ())?;
+    let t = type_sig(input)?;
+    proj!(input, Token::LCurl(_), ())?;
+    proj!(input, Token::RCurl(_), ())?;
+
+    Ok(Ast::Function { 
+        name: Box::new(name), 
+        params: Box::new(Ast::SyntaxList(vec![])),
+        return_type: Box::new(t),
+        body: Box::new(Ast::SyntaxList(vec![])),
+    })
+}
 
 fn ret<'a>(mut results : Vec<Capture<'a, Token, Ast>>) -> Result<Ast, JerboaError> {
     Ok(results.remove(0).unwrap_result().unwrap())
