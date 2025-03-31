@@ -92,9 +92,9 @@ fn type_sig(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
     }
 
     let s = simple(input)?;
-    match index_end(input) {
-        Ok(index) => Ok(Ast::IndexType{ name: Box::new(s), params: Box::new(index) }),
-        Err(_) => Ok(s),
+    match (s, index_end(input)) {
+        (Ast::SimpleType(n), Ok(index)) => Ok(Ast::IndexType{ name: Box::new(*n), params: Box::new(index) }),
+        (s, _) => Ok(s),
     }
 }
 
