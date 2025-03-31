@@ -26,7 +26,6 @@ macro_rules! proj {
 
 #[derive(Debug)]
 enum ParseError {
-    UnexpectedSymbol(Meta),
     UnexpectedToken(Token),
     UnexpectedEof,
 }
