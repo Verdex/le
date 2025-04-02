@@ -17,6 +17,8 @@ impl Meta {
     }
 }
 
+// TODO Box<str> -> Rc<str>
+
 #[derive(Debug, Clone)]
 pub enum Token {
     Number(Box<str>, Meta),
