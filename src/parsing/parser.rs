@@ -125,14 +125,42 @@ fn fun(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
     proj!(input, Token::RArrow(_), ())?;
     let t = type_sig(input)?;
     proj!(input, Token::LCurl(_), ())?;
+    let e = expr(input)?;
     proj!(input, Token::RCurl(_), ())?;
 
     Ok(Ast::Function { 
         name: Box::new(name), 
         params: Box::new(Ast::SyntaxList(params)),
         return_type: Box::new(t),
-        body: Box::new(Ast::SyntaxList(vec![])),
+        body: Box::new(e),
     })
+}
+
+fn expr(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+    fn number(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+        proj!(input, Token::Number(n, _), Ast::Number(n.clone()))
+    }
+    fn symbol(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+        proj!(input, Token::Symbol(s, _), Ast::Symbol(s.clone()))
+    }
+    fn call(input : &mut Buffer<Token>) -> Result<Box<dyn Fn(Ast) -> Ast>, ParseError> {
+        proj!(input, Token::LParen(_), ())?;
+        proj!(input, Token::RParen(_), ())?;
+        Ok(Box::new(|x| Ast::Call { fun_expr: Box::new(x), inputs: Box::new(Ast::SyntaxList(vec![])) }))
+    }
+    
+    let mut e = input.or([number, symbol])?;
+
+    loop {
+        match input.or([call]) {
+            Ok(follow) => {
+                e = follow(e);
+            },
+            Err(_) => { break; },
+        }
+    }
+
+    Ok(e)
 }
 
 fn ret<'a>(mut results : Vec<Capture<'a, Token, Ast>>) -> Result<Ast, JerboaError> {
