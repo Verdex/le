@@ -416,7 +416,7 @@ mod test {
 
     #[test]
     fn should_parse_fun_with_complex_index_type() {
-        let s = "fun name() -> T3<T1<T4>, T2, T5> { }";
+        let s = "fun name() -> T3<T1<T4>, T2, T5> { z }";
         let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
@@ -433,7 +433,7 @@ mod test {
                                             &[ atom("T3".into())
                                              , exact_list(&[ first_pattern, second_pattern, third_pattern ])
                                              ])
-                                        , exact_list(&[])
+                                        , atom("z".into())
                                         ]);
         let results = find(pattern, &output).collect::<Vec<_>>();
         
@@ -442,7 +442,7 @@ mod test {
 
     #[test]
     fn should_parse_fun_with_index_type() {
-        let s = "fun name() -> T3<T1> { }";
+        let s = "fun name() -> T3<T1> { z }";
         let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
@@ -454,7 +454,7 @@ mod test {
                                         , cons("index-type", &[ atom("T3".into())
                                                               , exact_list(&[cons("simple-type", &[atom("T1".into())])])
                                                               ])
-                                        , exact_list(&[])
+                                        , atom("z".into())
                                         ]);
         let results = find(pattern, &output).collect::<Vec<_>>();
         
@@ -463,7 +463,7 @@ mod test {
 
     #[test]
     fn should_parse_zero_param_fun() {
-        let s = "fun name() -> T3 { }";
+        let s = "fun name() -> T3 { z }";
         let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
@@ -473,7 +473,7 @@ mod test {
         let pattern = cons("function", &[ atom("name".into())
                                         , exact_list(&[])
                                         , cons("simple-type", &[atom("T3".into())])
-                                        , exact_list(&[])
+                                        , atom("z".into())
                                         ]);
         let results = find(pattern, &output).collect::<Vec<_>>();
         
@@ -482,7 +482,7 @@ mod test {
 
     #[test]
     fn should_parse_single_param_fun() {
-        let s = "fun name(x : T) -> T3 { }";
+        let s = "fun name(x : T) -> T3 { x }";
         let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
@@ -492,7 +492,7 @@ mod test {
         let pattern = cons("function", &[ atom("name".into())
                                         , exact_list(&[cons("slot", &[atom("x".into()), cons("simple-type", &[atom("T".into())])])])
                                         , cons("simple-type", &[atom("T3".into())])
-                                        , exact_list(&[])
+                                        , atom("x".into())
                                         ]);
         let results = find(pattern, &output).collect::<Vec<_>>();
 
@@ -501,7 +501,7 @@ mod test {
     
     #[test]
     fn should_parse_fun() {
-        let s = "fun name(x : T1, y : T2) -> T3 { }";
+        let s = "fun name(x : T1, y : T2) -> T3 { x }";
         let input = lexer::lex(s.into()).unwrap();
         let mut output = parse(input).unwrap();
         assert_eq!(output.len(), 1);
@@ -513,7 +513,7 @@ mod test {
                                                       , cons("slot", &[atom("y".into()), cons("simple-type", &[atom("T2".into())])])
                                                       ])
                                         , cons("simple-type", &[atom("T3".into())])
-                                        , exact_list(&[])
+                                        , atom("x".into())
                                         ]);
         let results = find(pattern, &output).collect::<Vec<_>>();
 
