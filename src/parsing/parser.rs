@@ -142,7 +142,7 @@ fn expr(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
         proj!(input, Token::Number(n, _), Ast::Number(n.clone()))
     }
     fn symbol(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
-        proj!(input, Token::Symbol(s, _), Ast::Symbol(s.clone()))
+        proj!(input, Token::Symbol(s, _), Ast::Variable(Box::new(Ast::Symbol(s.clone()))))
     }
     fn call(input : &mut Buffer<Token>) -> Result<Box<dyn Fn(Ast) -> Ast>, ParseError> {
         proj!(input, Token::LParen(_), ())?;
@@ -434,7 +434,7 @@ mod test {
                                             &[ atom("T3".into())
                                              , exact_list(&[ first_pattern, second_pattern, third_pattern ])
                                              ])
-                                        , atom("z".into())
+                                        , cons("variable", &[atom("z".into())])
                                         ]);
         let results = find(pattern, &output).collect::<Vec<_>>();
         
@@ -455,7 +455,7 @@ mod test {
                                         , cons("index-type", &[ atom("T3".into())
                                                               , exact_list(&[cons("simple-type", &[atom("T1".into())])])
                                                               ])
-                                        , atom("z".into())
+                                        , cons("variable", &[atom("z".into())])
                                         ]);
         let results = find(pattern, &output).collect::<Vec<_>>();
         
@@ -474,7 +474,7 @@ mod test {
         let pattern = cons("function", &[ atom("name".into())
                                         , exact_list(&[])
                                         , cons("simple-type", &[atom("T3".into())])
-                                        , atom("z".into())
+                                        , cons("variable", &[atom("z".into())])
                                         ]);
         let results = find(pattern, &output).collect::<Vec<_>>();
         
@@ -493,7 +493,7 @@ mod test {
         let pattern = cons("function", &[ atom("name".into())
                                         , exact_list(&[cons("slot", &[atom("x".into()), cons("simple-type", &[atom("T".into())])])])
                                         , cons("simple-type", &[atom("T3".into())])
-                                        , atom("x".into())
+                                        , cons("variable", &[atom("x".into())])
                                         ]);
         let results = find(pattern, &output).collect::<Vec<_>>();
 
@@ -514,7 +514,7 @@ mod test {
                                                       , cons("slot", &[atom("y".into()), cons("simple-type", &[atom("T2".into())])])
                                                       ])
                                         , cons("simple-type", &[atom("T3".into())])
-                                        , atom("x".into())
+                                        , cons("variable", &[atom("x".into())])
                                         ]);
         let results = find(pattern, &output).collect::<Vec<_>>();
 
