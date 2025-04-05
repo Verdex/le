@@ -48,12 +48,6 @@ impl From<Vec<ParseError>> for ParseError{
     }
 }
 
-thread_local!{
-    static RULE : RefCell<Rc<Rule<Token, Ast>>> = RefCell::new(init_rules());
-}
-
-
-
 pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
     let mut buffer = Buffer::new(&input);
     let mut top_level = vec![];
@@ -175,244 +169,6 @@ fn expr(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
     Ok(e)
 }
 
-fn ret<'a>(mut results : Vec<Capture<'a, Token, Ast>>) -> Result<Ast, JerboaError> {
-    Ok(results.remove(0).unwrap_result().unwrap())
-}
-
-macro_rules! proj {
-    ($input:expr, $p:pat, $e:expr) => { 
-        match $input {
-            $p => $e,
-            _ => unreachable!(),
-        }
-    }
-}
-
-macro_rules! lets {
-    ($target:ident, $body:block) => { return $body; };
-    ($target:ident, $n:ident, $($rest:tt)*) => {
-        let $n = $target.remove(0);
-        lets!($target, $($rest)*);
-    };
-    ($target:ident, _, $($rest:tt)*) => {
-        $target.remove(0);
-        lets!($target, $($rest)*);
-    };
-}
-
-macro_rules! transform {
-    ($($input:tt)*) => { |mut results| { lets!(results, $($input)*); } }
-}
-
-macro_rules! pred_match {
-    ($p:pat) => { Match::pred(|x, _| matches!(x, $p)) }
-}
-
-macro_rules! is_keyword {
-    ($name:expr) => { Match::pred(|x, _| 
-        match x { 
-            Token::Symbol(name, _) if **name == *$name => true,
-            _ => false,
-        }) 
-    }
-}
-
-fn init_rules() -> Rc<Rule<Token, Ast>> {
-
-    // TODO: generator: yield and halt
-
-    let ttype = ttype_rule();
-    let expr = expr_rule(); 
-
-    let top_level_redirect = Rule::new( "top_level_redirect"
-                                      , vec![Match::late(0)]
-                                      , transform!(result, { Ok(result.unwrap_result().unwrap()) })
-                                      );
-    
-    let fun_param = Rule::new( "fun_param"
-                             , vec![ pred_match!(Token::Symbol(_, _))
-                                   , pred_match!(Token::Colon(_))
-                                   , Match::rule(&ttype) 
-                                   ]
-                             , transform!(name, _, ttype, {
-                                    let name = proj!( name.unwrap().unwrap()
-                                                    , Token::Symbol(n, _)
-                                                    , Box::new(Ast::Symbol(n.clone()))
-                                                    );
-                                    let ttype = Box::new(ttype.unwrap_result().unwrap());
-                                    Ok(Ast::Slot { name, ttype })
-                             }));
-    let param_list = comma_list_gen("param_list", &fun_param);
-
-    let fun = Rule::new( "fun" 
-                       , vec![ is_keyword!("fun") 
-                             , pred_match!(Token::Symbol(_, _))
-                             , pred_match!(Token::LParen(_))
-                             , Match::rule(&param_list)
-                             , pred_match!(Token::RParen(_))
-                             , pred_match!(Token::RArrow(_))
-                             , Match::rule(&ttype)
-                             , pred_match!(Token::LCurl(_))
-                             , Match::list(&top_level_redirect)
-                             , pred_match!(Token::RCurl(_))
-                             ]
-
-                       , transform!(_, name, _, params, _, _, ret_type, _, body, _, {
-
-                            let name = proj!( name.unwrap().unwrap()
-                                            , Token::Symbol(n, _)
-                                            , Box::new(Ast::Symbol(n.clone()))
-                                            );
-                            let params = Box::new(params.unwrap_result().unwrap());
-
-                            let return_type = Box::new(ret_type.unwrap_result().unwrap());
-                            let body = Box::new(Ast::SyntaxList(body.unwrap_list().unwrap()));
-
-                            Ok(Ast::Function { name, params, return_type, body })
-                       }));
-                       
-
-
-    let top_level = Rule::new("top_level", vec![Match::choice(&[&fun, &expr])], ret);
-
-    top_level_redirect.bind(&[&top_level]);
-
-    top_level
-}
-
-fn expr_rule() -> Rc<Rule<Token, Ast>> {
-    let redirect = Rule::new( "expr_redirect", vec![Match::late(0)], transform!(result, { Ok(result.unwrap_result().unwrap()) }));
-
-    let redirect_list = comma_list_gen("redirect_list", &redirect);
-
-    let number = Rule::new( "number"
-                          , vec![pred_match!(Token::Number(_, _))]
-                          , transform!(result, {
-                                proj!( result.unwrap().unwrap()
-                                     , Token::Number(n, _)
-                                     , Ok(Ast::Number(n.clone()))
-                                     )
-                          }));
-
-    let variable = Rule::new( "variable"
-                            , vec![pred_match!(Token::Symbol(_, _))]
-                            , transform!(x, { 
-                                proj!( x.unwrap().unwrap()
-                                     , Token::Symbol(n, _)
-                                     , Ok(Ast::Variable(Box::new(Ast::Symbol(n.clone()))))
-                                     )
-                            }));
-     
-    let expr = Rule::new("expr", vec![
-        Match::choice(&[ &number
-                       , &variable
-                       ])], ret);
-
-    let call_followup = Rule::new( "call_followup"
-                                 , vec![ pred_match!(Token::LParen(_))
-                                       , Match::rule(&redirect_list)
-                                       , pred_match!(Token::RParen(_))
-                                       ]
-                                 , transform!(_, l, _, { 
-                                    Ok(Ast::SyntaxList(vec![Ast::Symbol("call".into()), l.unwrap_result().unwrap()]))
-                                }));
-
-    let followup_choice = Rule::new("followup_choice", 
-        vec![Match::choice(&[&call_followup])], 
-        transform!(result, { Ok(result.unwrap_result().unwrap())}));
-
-    let expr_with_followup = 
-        Rule::new( "expr_with_followup"
-                 , vec![ Match::rule(&expr)
-                       , Match::list(&followup_choice)
-                       ]
-                 , transform!(expr, follow, {
-                    let mut expr = expr.unwrap_result().unwrap();
-
-                    for item in follow.unwrap_list().unwrap() {
-                        let mut item = proj!(item, Ast::SyntaxList(ls), ls);
-                        let t = proj!(item.remove(0), Ast::Symbol(n), n.clone());
-                        let follow = Box::new(item.remove(0));
-                        match &*t {
-                            "call" => 
-                                expr = Ast::Call { fun_expr: Box::new(expr), inputs: follow },
-                            _ => todo!(),
-                        }
-                    }
-
-                    Ok(expr)
-                 }));
-
-    redirect.bind(&[&expr_with_followup]);
-
-    expr_with_followup
-}
-
-fn ttype_rule() -> Rc<Rule<Token, Ast>> {
-    // Note:  Arrow types are an option, but just doing Fun< ... > is going to
-    // be just as easy and doesn't require a bunch of special handling.
-
-    let simple_type = Rule::new( "simple_type"
-                               , vec![pred_match!(Token::Symbol(_, _))]
-                               , transform!( name, {
-                                    let name = proj!( name.unwrap().unwrap()
-                                                    , Token::Symbol(n, _)
-                                                    , Box::new(Ast::Symbol(n.clone()))
-                                                    );
-                                    Ok(Ast::SimpleType(name))
-                               }));
-
-    let ttype_redirect = Rule::new( "type_redirect"
-                                  , vec![Match::late(0)]
-                                  , transform!(result, { Ok(result.unwrap_result().unwrap()) })
-                                  );
-    
-    let type_list = comma_list_gen("type_list", &ttype_redirect);
-
-    let index_type = Rule::new( "index_type"
-                              , vec![ pred_match!(Token::Symbol(_, _)) 
-                                    , pred_match!(Token::LAngle(_))
-                                    , Match::rule(&type_list)
-                                    , pred_match!(Token::RAngle(_))
-                                    ]
-                              , transform!( name, _, params, {
-                                    let name = proj!( name.unwrap().unwrap()
-                                                    , Token::Symbol(n, _)
-                                                    , Box::new(Ast::Symbol(n.clone()))
-                                                    );
-                                    let params = Box::new(params.unwrap_result().unwrap());
-                                    Ok(Ast::IndexType{ name, params })
-                              }));
-
-    let ttype = Rule::new( "type"
-                         , vec![Match::choice(&[&index_type, &simple_type])]
-                         , ret 
-                         );
-    
-    ttype_redirect.bind(&[&ttype]);
-
-    ttype
-}
-
-fn comma_list_gen(name : &'static str, rule : &Rc<Rule<Token, Ast>>) -> Rc<Rule<Token, Ast>> {
-    let comma_rule = Rule::new( format!("comma_{}", name) 
-                              , vec![pred_match!(Token::Comma(_)), Match::rule(rule)]
-                              , transform!(_, x, {
-                                    Ok(x.unwrap_result().unwrap())     
-                              }));
-    
-    Rule::new( name
-             , vec![Match::option(rule), Match::list(&comma_rule)]
-             , transform!(opt, list, {
-                    let opt = opt.unwrap_option().unwrap();
-                    let mut list = list.unwrap_list().unwrap();
-                    if opt.is_some() {
-                        list.insert(0, opt.unwrap());
-                    }
-                    Ok(Ast::SyntaxList(list))
-             }))
-}
-
 #[cfg(test)] 
 mod test {
     use std::collections::HashMap;
@@ -422,6 +178,14 @@ mod test {
     use super::*;
     use super::super::lexer;
 
+    macro_rules! proj {
+        ($input:expr, $p:pat, $e:expr) => { 
+            match $input {
+                $p => $e,
+                _ => unreachable!(),
+            }
+        }
+    }
     // TODO: top level items defined in function test
 
     // TODO: let results = results.remove(0).into_iter().collect::<HashMap<Box<str>, &Ast>>();
