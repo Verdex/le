@@ -1,13 +1,9 @@
 
-use crate::data::{ Meta, Token, Ast };
+use crate::data::{ Token, Ast };
 
 use super::buffer::Buffer;
 
 use std::error::Error;
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use dealize::jerboa::{self, Rule, Match, Capture, JerboaError};
 
 macro_rules! proj {
     ($input:ident, $target:pat, $e:expr) => {
@@ -171,8 +167,6 @@ fn expr(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
 
 #[cfg(test)] 
 mod test {
-    use std::collections::HashMap;
-
     use dealize::pattern::*;
 
     use super::*;
