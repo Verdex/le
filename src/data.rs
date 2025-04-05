@@ -73,7 +73,7 @@ pub enum Ast {
     // TODO remove syntax list
     // TODO simple type can use str instead of ast
     Number(Box<str>), 
-    Symbol(Box<str>),
+    Symbol(Box<str>),  // TODO probably get rid of symbol
     Slot { name : Box<Ast>, ttype : Box<Ast> },
     SimpleType(Box<Ast>),
     IndexType{ name : Box<Ast>, params : Box<Ast> },
