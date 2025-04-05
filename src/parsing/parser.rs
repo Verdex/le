@@ -144,10 +144,21 @@ fn expr(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
     fn symbol(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
         proj!(input, Token::Symbol(s, _), Ast::Variable(Box::new(Ast::Symbol(s.clone()))))
     }
-    fn call(input : &mut Buffer<Token>) -> Result<Box<dyn Fn(Ast) -> Ast>, ParseError> {
+    fn call(input : &mut Buffer<Token>) -> Result<Box<dyn FnOnce(Ast) -> Ast>, ParseError> {
         proj!(input, Token::LParen(_), ())?;
+        let params = match input.option(|input| expr(input))? {
+            Some(first) => {
+                let mut rest = input.list(|input| {
+                    proj!(input, Token::Comma(_), ())?;
+                    expr(input)
+                })?;
+                rest.insert(0, first);
+                rest
+            },
+            None => vec![],
+        };
         proj!(input, Token::RParen(_), ())?;
-        Ok(Box::new(|x| Ast::Call { fun_expr: Box::new(x), inputs: Box::new(Ast::SyntaxList(vec![])) }))
+        Ok(Box::new(move |x| Ast::Call { fun_expr: Box::new(x), inputs: Box::new(Ast::SyntaxList(params)) }))
     }
     
     let mut e = input.or([number, symbol])?;
