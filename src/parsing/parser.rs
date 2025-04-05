@@ -62,7 +62,8 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
 
         let item = buffer.or(
             [
-                fun
+                fun,
+                expr
             ])?;
         top_level.push(item);
     }
