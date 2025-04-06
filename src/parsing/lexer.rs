@@ -1,10 +1,11 @@
 
-use super::buffer::Buffer;
+use jlnexus::Parser;
+
 use crate::data::{ Meta, Token };
 
 macro_rules! lex_char {
     ($name:ident, $target : literal) => {
-        fn $name(input : &mut Buffer<char>) -> Result<char, LexError> {
+        fn $name(input : &mut Parser<char>) -> Result<char, LexError> {
             let index = input.index();
             let c = input.get(LexError::UnexpectedEof)?;
             if *c == $target {
@@ -19,7 +20,7 @@ macro_rules! lex_char {
 
 macro_rules! punct {
     ($name:ident, $target:literal, $result:expr) => {
-        fn $name(input : &mut Buffer<char>) -> Result<Token, LexError> {
+        fn $name(input : &mut Parser<char>) -> Result<Token, LexError> {
             lex_char!(lexer, $target);
 
             let index = input.index();
@@ -68,7 +69,7 @@ impl std::error::Error for LexError { }
 
 pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
     let input = input.chars().collect::<Vec<_>>();
-    let mut buffer = Buffer::new(&input);
+    let mut buffer = Parser::new(&input);
 
     let mut tokens = vec![];
 
@@ -128,7 +129,7 @@ punct!(semicolon, ';', |index| Token::Semicolon(Meta::single(index)));
 punct!(colon, ':', |index| Token::Colon(Meta::single(index)));
 punct!(equal, '=', |index| Token::Equal(Meta::single(index)));
 
-fn r2arrow(input : &mut Buffer<char>) -> Result<Token, LexError> {
+fn r2arrow(input : &mut Parser<char>) -> Result<Token, LexError> {
     lex_char!(minus, '=');
     lex_char!(rangle, '>');
 
@@ -138,7 +139,7 @@ fn r2arrow(input : &mut Buffer<char>) -> Result<Token, LexError> {
     Ok(Token::R2Arrow(Meta::range(index, index + 1)))
 }
 
-fn rarrow(input : &mut Buffer<char>) -> Result<Token, LexError> {
+fn rarrow(input : &mut Parser<char>) -> Result<Token, LexError> {
     lex_char!(minus, '-');
     lex_char!(rangle, '>');
 
@@ -148,7 +149,7 @@ fn rarrow(input : &mut Buffer<char>) -> Result<Token, LexError> {
     Ok(Token::RArrow(Meta::range(index, index + 1)))
 }
 
-fn triangle(input : &mut Buffer<char>) -> Result<Token, LexError> {
+fn triangle(input : &mut Parser<char>) -> Result<Token, LexError> {
     lex_char!(bar, '|');
     lex_char!(rangle, '>');
 
@@ -166,7 +167,7 @@ fn triangle(input : &mut Buffer<char>) -> Result<Token, LexError> {
     Ok(Token::Triangle(number, Meta::range(index, index + 1 + ds.len())))
 }
 
-fn symbol(input : &mut Buffer<char>) -> Result<Token, LexError> {
+fn symbol(input : &mut Parser<char>) -> Result<Token, LexError> {
     let start = input.index();
     let first = input.or([letter, underscore])?;
     let mut rest = input.list(|input| input.or([letter, digit, underscore]))?;
@@ -177,7 +178,7 @@ fn symbol(input : &mut Buffer<char>) -> Result<Token, LexError> {
     Ok(Token::Symbol(s, Meta::range(start, start + len)))
 }
 
-fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
+fn number(input : &mut Parser<char>) -> Result<Token, LexError> {
     lex_char!(dot, '.');
 
     let start = input.index();
@@ -198,7 +199,7 @@ fn number(input : &mut Buffer<char>) -> Result<Token, LexError> {
     }
 }
 
-fn string(input : &mut Buffer<char>) -> Result<Token, LexError> {
+fn string(input : &mut Parser<char>) -> Result<Token, LexError> {
     lex_char!(quote, '"');
 
     let first = input.index();
@@ -255,7 +256,7 @@ fn string(input : &mut Buffer<char>) -> Result<Token, LexError> {
 lex_char!(underscore, '_');
 lex_char!(minus, '-');
 
-fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
+fn letter(input : &mut Parser<char>) -> Result<char, LexError> {
     let index = input.index();
     let c = input.get(LexError::UnexpectedEof)?;
     if c.is_alphabetic() {
@@ -266,7 +267,7 @@ fn letter(input : &mut Buffer<char>) -> Result<char, LexError> {
     }
 }
 
-fn digit(input : &mut Buffer<char>) -> Result<char, LexError> {
+fn digit(input : &mut Parser<char>) -> Result<char, LexError> {
     let index = input.index();
     let c = input.get(LexError::UnexpectedEof)?;
     if c.is_digit(10) {
@@ -277,7 +278,7 @@ fn digit(input : &mut Buffer<char>) -> Result<char, LexError> {
     }
 }
 
-fn whitespace(input : &mut Buffer<char>) {
+fn whitespace(input : &mut Parser<char>) {
     loop {
         let result = input.with_rollback(|input|
             if input.get(LexError::UnexpectedEof)?.is_whitespace() {
@@ -294,7 +295,7 @@ fn whitespace(input : &mut Buffer<char>) {
     }
 }
 
-fn line_comment(input : &mut Buffer<char>) {
+fn line_comment(input : &mut Parser<char>) {
     lex_char!(slash, '/');
 
     let _ : Result<(), LexError> = input.with_rollback(|input| {
@@ -314,7 +315,7 @@ fn line_comment(input : &mut Buffer<char>) {
     });
 }
 
-fn block_comment(input : &mut Buffer<char>) -> Result<(), LexError> {
+fn block_comment(input : &mut Parser<char>) -> Result<(), LexError> {
     lex_char!(slash, '/');
     lex_char!(star, '*');
 

@@ -1,9 +1,8 @@
 
+use std::error::Error;
+use jlnexus::Parser;
 use crate::data::{ Token, Ast };
 
-use super::buffer::Buffer;
-
-use std::error::Error;
 
 macro_rules! proj {
     ($input:ident, $target:pat, $e:expr) => {
@@ -45,7 +44,7 @@ impl From<Vec<ParseError>> for ParseError{
 }
 
 pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
-    let mut buffer = Buffer::new(&input);
+    let mut buffer = Parser::new(&input);
     let mut top_level = vec![];
 
     while !buffer.end() {
@@ -61,14 +60,14 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
     Ok(top_level)
 }
 
-fn type_sig(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
-    fn simple(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+fn type_sig(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
+    fn simple(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         match input.get(ParseError::UnexpectedEof)? {
             Token::Symbol(s, _) => Ok(Ast::SimpleType(Box::new(Ast::Symbol(s.clone())))),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
     }
-    fn index_end(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+    fn index_end(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         input.with_rollback(|input| {
             proj!(input, Token::LAngle(_), ())?;
             let first = type_sig(input)?;
@@ -90,8 +89,8 @@ fn type_sig(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
     }
 }
 
-fn fun(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
-    fn param(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
+    fn param(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         let n = proj!(input, Token::Symbol(n, _), Ast::Symbol(n.clone()))?;
         proj!(input, Token::Colon(_), ())?;
         let t = type_sig(input)?;
@@ -127,14 +126,14 @@ fn fun(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
     })
 }
 
-fn expr(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
-    fn number(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
+    fn number(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         proj!(input, Token::Number(n, _), Ast::Number(n.clone()))
     }
-    fn symbol(input : &mut Buffer<Token>) -> Result<Ast, ParseError> {
+    fn symbol(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         proj!(input, Token::Symbol(s, _), Ast::Variable(Box::new(Ast::Symbol(s.clone()))))
     }
-    fn call(input : &mut Buffer<Token>) -> Result<Box<dyn FnOnce(Ast) -> Ast>, ParseError> {
+    fn call(input : &mut Parser<Token>) -> Result<Box<dyn FnOnce(Ast) -> Ast>, ParseError> {
         proj!(input, Token::LParen(_), ())?;
         let params = match input.option(|input| expr(input))? {
             Some(first) => {
