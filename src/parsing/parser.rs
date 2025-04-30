@@ -63,11 +63,11 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
 fn type_sig(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     fn simple(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         match input.get(ParseError::UnexpectedEof)? {
-            Token::Symbol(s, _) => Ok(Ast::SimpleType(Box::new(Ast::Symbol(s.clone())))),
+            Token::Symbol(s, _) => Ok(Ast::SimpleType(s.clone())),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
     }
-    fn index_end(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
+    fn index_end(input : &mut Parser<Token>) -> Result<Vec<Ast>, ParseError> {
         input.with_rollback(|input| {
             proj!(input, Token::LAngle(_), ())?;
             let first = type_sig(input)?;
@@ -77,28 +77,27 @@ fn type_sig(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
             })?;
             proj!(input, Token::RAngle(_), ())?;
             rest.insert(0, first);
-            Ok(Ast::SyntaxList(rest))
+            Ok(rest)
         })
     }
 
-    // TODO a bunch of the stuff here can be cleaned up after syntax list is removed
     let s = simple(input)?;
     match (s, index_end(input)) {
-        (Ast::SimpleType(n), Ok(index)) => Ok(Ast::IndexType{ name: Box::new(*n), params: Box::new(index) }),
+        (Ast::SimpleType(n), Ok(index)) => Ok(Ast::IndexType{ name: n.clone(), params: index }),
         (s, _) => Ok(s),
     }
 }
 
 fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     fn param(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-        let n = proj!(input, Token::Symbol(n, _), Ast::Symbol(n.clone()))?;
+        let n = proj!(input, Token::Symbol(n, _), n.clone())?;
         proj!(input, Token::Colon(_), ())?;
         let t = type_sig(input)?;
-        Ok(Ast::Slot { name: Box::new(n), ttype: Box::new(t) })
+        Ok(Ast::Slot { name: n, ttype: Box::new(t) })
     }
 
     proj!(input, Token::Symbol(n, _) if **n == *"fun", ())?;
-    let name = proj!(input, Token::Symbol(n, _), Ast::Symbol(n.clone()))?;
+    let name = proj!(input, Token::Symbol(n, _), n.clone())?;
     proj!(input, Token::LParen(_), ())?;
     let params = match input.option(|input| param(input))? {
         Some(first) => {
@@ -119,8 +118,8 @@ fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     proj!(input, Token::RCurl(_), ())?;
 
     Ok(Ast::Function { 
-        name: Box::new(name), 
-        params: Box::new(Ast::SyntaxList(params)),
+        name: name, 
+        params: params,
         return_type: Box::new(t),
         body: Box::new(e),
     })
@@ -131,7 +130,7 @@ fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         proj!(input, Token::Number(n, _), Ast::Number(n.clone()))
     }
     fn symbol(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-        proj!(input, Token::Symbol(s, _), Ast::Variable(Box::new(Ast::Symbol(s.clone()))))
+        proj!(input, Token::Symbol(s, _), Ast::Variable(s.clone()))
     }
     fn call(input : &mut Parser<Token>) -> Result<Box<dyn FnOnce(Ast) -> Ast>, ParseError> {
         proj!(input, Token::LParen(_), ())?;
@@ -147,7 +146,7 @@ fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
             None => vec![],
         };
         proj!(input, Token::RParen(_), ())?;
-        Ok(Box::new(move |x| Ast::Call { fun_expr: Box::new(x), inputs: Box::new(Ast::SyntaxList(params)) }))
+        Ok(Box::new(move |x| Ast::Call { fun_expr: Box::new(x), inputs: params }))
     }
     
     let mut e = input.or([number, symbol])?;

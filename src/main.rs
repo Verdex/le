@@ -1,8 +1,6 @@
 
 mod data;
 mod parsing;
-mod compiler;
-mod vm;
 
 use std::io::{self, Write};
 

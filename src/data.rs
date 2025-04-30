@@ -1,7 +1,4 @@
 
-use dealize::pattern::*;
-use dealize::seq::Seqable;
-
 #[derive(Debug, Clone)]
 pub struct Meta {
     pub start : usize,
@@ -70,91 +67,19 @@ impl Token {
 
 #[derive(Debug, PartialEq)]
 pub enum Ast {
-    // TODO remove syntax list
-    // TODO simple type can use str instead of ast
     Number(Box<str>), 
-    Symbol(Box<str>),  // TODO probably get rid of symbol
-    Slot { name : Box<Ast>, ttype : Box<Ast> },
-    SimpleType(Box<Ast>),
-    IndexType{ name : Box<Ast>, params : Box<Ast> },
-    Variable(Box<Ast>),
+    Slot { name : Box<str>, ttype : Box<Ast> },
+    SimpleType(Box<str>),
+    IndexType{ name : Box<str>, params : Vec<Ast> },
+    Variable(Box<str>),
     Call { 
         fun_expr : Box<Ast>,
-        inputs : Box<Ast>,
+        inputs : Vec<Ast>,
     },
     Function {
-        name : Box<Ast>,
-        params : Box<Ast>,
+        name : Box<str>,
+        params : Vec<Ast>,
         return_type : Box<Ast>,
         body : Box<Ast>,
     },
-    SyntaxList(Vec<Ast>),
-}
-
-impl Matchable for Ast {
-    type Atom = Box<str>;
-
-    fn kind<'a>(&'a self) -> MatchKind<'a, Self> {
-        match self {
-            Ast::Symbol(n) => MatchKind::Atom(n),
-            Ast::SyntaxList(ls) => MatchKind::List(ls),
-            Ast::Number(_) => MatchKind::Cons("number", vec![]),
-            Ast::Slot { name, ttype } => MatchKind::Cons("slot", vec![&*name, ttype]),
-            Ast::SimpleType(name) => MatchKind::Cons("simple-type", vec![&*name]),
-            Ast::IndexType { name, params } => MatchKind::Cons("index-type", vec![&*name, params]),
-            Ast::Variable(name) => MatchKind::Cons("variable", vec![&*name]),
-            Ast::Call { fun_expr, inputs } => MatchKind::Cons("call", vec![&*fun_expr, inputs]),
-            Ast::Function { name, params, return_type, body } => 
-                MatchKind::Cons("function", vec![name, params, return_type, body]),
-        }
-    }
-}
-
-impl<'a> Seqable<'a> for Ast {
-    fn seq_next(&self) -> Vec<&Self> {
-        match self {
-            Ast::Symbol(_) => vec![],
-            Ast::SyntaxList(ls) => ls.iter().collect(),
-            Ast::Number(_) => vec![],
-            Ast::Slot { name, ttype } => vec![&*name, ttype],
-            Ast::SimpleType(name) => vec![&*name],
-            Ast::IndexType { name, params } => vec![&*name, params],
-            Ast::Variable(name) => vec![&*name],
-            Ast::Call { fun_expr, inputs } => vec![&*fun_expr, inputs],
-            Ast::Function { name, params, return_type, body } => vec![name, params, return_type, body],
-        }
-    }
-}
-
-pub mod vm {
-    use std::rc::Rc;
-
-    #[derive(Debug, Clone)]
-    pub enum LAddr {
-        Local(usize),
-        Env(usize),
-    }
-
-    #[derive(Debug, Clone)]
-    pub enum Lit {
-        Float(f64),
-        Ref(LAddr),
-        Unit,
-    }
-
-    #[derive(Debug)]
-    pub enum Stmt {
-        Deref(LAddr, usize),
-        Add(LAddr, LAddr),
-        Cons(Vec<Lit>),
-        Return(LAddr),
-        Call(Rc<Fun>, Vec<LAddr>),
-        DPrint(Vec<LAddr>),
-    }
-
-    #[derive(Debug)]
-    pub struct Fun { 
-        pub name : Box<str>,
-        pub body : Vec<Stmt>,
-    }
 }
