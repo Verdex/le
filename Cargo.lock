@@ -18,4 +18,13 @@ version = "0.1.0"
 dependencies = [
  "dealize",
  "jlnexus",
+ "ordan",
+]
+
+[[package]]
+name = "ordan"
+version = "1.0.0"
+source = "git+https://www.github.com/verdex/ordan?tag=release-1.0.0#2ac17c28ba2ff03a01b663f8107f514f451db7c1"
+dependencies = [
+ "jlnexus",
 ]
