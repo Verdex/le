@@ -299,6 +299,7 @@ mod test {
 
         assert_eq!(results.len(), 1);
     }
+*/
 
     #[test]
     fn should_parse_variable() {
@@ -309,11 +310,9 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("variable", &[atom("var".into())]);
+        let name = proj!(output, Ast::Variable(x), x);
 
-        let results = find(pattern, &output).collect::<Vec<_>>();
-
-        assert_eq!(results.len(), 1);
+        assert_eq!(name, "var".into());
     }
 
     #[test]
@@ -325,11 +324,19 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("call", &[wild(), wild()]);
-
-        let results = find(pattern, &output).collect::<Vec<_>>();
-
+        let mut results = s_pattern!(output => 
+            [Ast::Call { fun_expr, inputs }] fun_expr;
+            [Ast::Call { fun_expr: inner, inputs: inner_inputs }] inner; 
+            [Ast::Variable(x)] 
+            => (inputs, inner_inputs, x)).collect::<Vec<_>>();
+        
         assert_eq!(results.len(), 1);
+
+        let (inputs, inner_inputs, name) = results.remove(0);
+
+        assert_eq!(*name, "blah".into());
+        assert_eq!(inputs.len(), 0);
+        assert_eq!(inner_inputs.len(), 3);
     }
 
     #[test]
@@ -341,16 +348,22 @@ mod test {
 
         let output = output.remove(0);
 
-        let param_1 = cons("variable", &[atom("val".into())]);
-        let param_2 = cons("variable", &[atom("two".into())]);
-        let param_3 = cons("variable", &[atom("other".into())]);
-        let pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[param_1, param_2, param_3])]);
+        let (fun_expr, mut inputs) = proj!(output, Ast::Call { fun_expr, inputs }, (*fun_expr, inputs));
 
-        let results = find(pattern, &output).collect::<Vec<_>>();
+        let name = proj!(fun_expr, Ast::Variable(x), x);
+        assert_eq!(name, "blah".into());
 
-        assert_eq!(results.len(), 1);
+        assert_eq!(inputs.len(), 3);
+
+        let name = proj!(inputs.remove(0), Ast::Variable(x), x);
+        assert_eq!(name, "val".into());
+
+        let name = proj!(inputs.remove(0), Ast::Variable(x), x);
+        assert_eq!(name, "two".into());
+
+        let name = proj!(inputs.remove(0), Ast::Variable(x), x);
+        assert_eq!(name, "other".into());
     }
-*/
 
     #[test]
     fn should_parse_fun_call_with_param() {
