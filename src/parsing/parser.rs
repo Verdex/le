@@ -218,8 +218,6 @@ mod test {
         assert_eq!(t4, "T4".into());
     }
 
-    /*
-
     #[test]
     fn should_parse_fun_with_index_type() {
         let s = "fun name() -> T3<T1> { z }";
@@ -229,16 +227,12 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("function", &[ atom("name".into())
-                                        , exact_list(&[])
-                                        , cons("index-type", &[ atom("T3".into())
-                                                              , exact_list(&[cons("simple-type", &[atom("T1".into())])])
-                                                              ])
-                                        , cons("variable", &[atom("z".into())])
-                                        ]);
-        let results = find(pattern, &output).collect::<Vec<_>>();
-        
-        assert_eq!(results.len(), 1);
+        let return_type = proj!(output, Ast::Function { return_type, .. }, *return_type);
+
+        let (name, params) = proj!(return_type, Ast::IndexType { name, params}, (name, params));
+
+        assert_eq!(name, "T3".into());
+        assert_eq!(params.len(), 1);
     }
 
     #[test]
@@ -250,14 +244,8 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("function", &[ atom("name".into())
-                                        , exact_list(&[])
-                                        , cons("simple-type", &[atom("T3".into())])
-                                        , cons("variable", &[atom("z".into())])
-                                        ]);
-        let results = find(pattern, &output).collect::<Vec<_>>();
-        
-        assert_eq!(results.len(), 1);
+        let params = proj!(output, Ast::Function { params, .. }, params);
+        assert_eq!(params.len(), 0);
     }
 
     #[test]
@@ -269,14 +257,8 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("function", &[ atom("name".into())
-                                        , exact_list(&[cons("slot", &[atom("x".into()), cons("simple-type", &[atom("T".into())])])])
-                                        , cons("simple-type", &[atom("T3".into())])
-                                        , cons("variable", &[atom("x".into())])
-                                        ]);
-        let results = find(pattern, &output).collect::<Vec<_>>();
-
-        assert_eq!(results.len(), 1);
+        let params = proj!(output, Ast::Function { params, .. }, params);
+        assert_eq!(params.len(), 1);
     }
     
     #[test]
@@ -288,18 +270,9 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("function", &[ atom("name".into())
-                                        , exact_list(&[ cons("slot", &[atom("x".into()), cons("simple-type", &[atom("T1".into())])])
-                                                      , cons("slot", &[atom("y".into()), cons("simple-type", &[atom("T2".into())])])
-                                                      ])
-                                        , cons("simple-type", &[atom("T3".into())])
-                                        , cons("variable", &[atom("x".into())])
-                                        ]);
-        let results = find(pattern, &output).collect::<Vec<_>>();
-
-        assert_eq!(results.len(), 1);
+        let params = proj!(output, Ast::Function { params, .. }, params);
+        assert_eq!(params.len(), 2);
     }
-*/
 
     #[test]
     fn should_parse_variable() {
