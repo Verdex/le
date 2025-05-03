@@ -350,6 +350,7 @@ mod test {
 
         assert_eq!(results.len(), 1);
     }
+*/
 
     #[test]
     fn should_parse_fun_call_with_param() {
@@ -360,14 +361,18 @@ mod test {
 
         let output = output.remove(0);
 
-        let param_pattern = cons("variable", &[atom("val".into())]);
-        let pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[param_pattern])]);
+        let (fun_expr, mut inputs) = proj!(output, Ast::Call{fun_expr, inputs}, (*fun_expr, inputs));
 
-        let results = find(pattern, &output).collect::<Vec<_>>();
+        let name = proj!(fun_expr, Ast::Variable(x), x);
+        assert_eq!(name, "blah".into());
 
-        assert_eq!(results.len(), 1);
+        assert_eq!(inputs.len(), 1);
+
+        let input = inputs.remove(0);
+
+        let name = proj!(input, Ast::Variable(x), x);
+        assert_eq!(name, "val".into());
     }
-*/
 
     #[test]
     fn should_parse_fun_call_call() {
