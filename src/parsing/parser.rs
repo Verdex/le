@@ -367,6 +367,7 @@ mod test {
 
         assert_eq!(results.len(), 1);
     }
+*/
 
     #[test]
     fn should_parse_fun_call_call() {
@@ -377,12 +378,19 @@ mod test {
 
         let output = output.remove(0);
 
-        let inner_pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[])]);
-        let pattern = cons("call", &[inner_pattern, exact_list(&[])]);
-
-        let results = find(pattern, &output).collect::<Vec<_>>();
-
+        let mut results = s_pattern!(output => 
+            [Ast::Call { fun_expr, inputs } ] fun_expr; 
+            [Ast::Call { fun_expr: inner_expr, inputs: inner_input }] inner_expr; 
+            [Ast::Variable(name)]
+            => (inputs, inner_input, name)).collect::<Vec<_>>();
+        
         assert_eq!(results.len(), 1);
+
+        let (inputs, inner_input, name) = results.remove(0);
+
+        assert_eq!(*name, "blah".into());
+        assert_eq!(inputs.len(), 0);
+        assert_eq!(inner_input.len(), 0);
     }
 
     #[test]
@@ -393,12 +401,13 @@ mod test {
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
+        let (fun_expr, inputs) = proj!(output, Ast::Call { fun_expr, inputs }, (*fun_expr, inputs));
 
-        let pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[])]);
+        assert_eq!(inputs.len(), 0);
 
-        let results = find(pattern, &output).collect::<Vec<_>>();
+        let var = proj!(fun_expr, Ast::Variable(x), x);
 
-        assert_eq!(results.len(), 1);
+        assert_eq!(var, "blah".into());
     }
 
     #[test]
@@ -410,5 +419,4 @@ mod test {
         let output = proj!(output.remove(0), Ast::Number(v), v);
         assert_eq!(output, "100".into());
     }
-*/
 }
