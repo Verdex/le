@@ -174,7 +174,7 @@ mod test {
         ($input:expr, $p:pat, $e:expr) => { 
             match $input {
                 $p => $e,
-                _ => unreachable!(),
+                _ => panic!("proj failed"),
             }
         }
     }
@@ -191,13 +191,31 @@ mod test {
 
         let output = output.remove(0);
 
-        let results = s_pattern!(output => 
-            [ Ast::Function { return_type, .. } ] return_type; 
-            [ Ast::IndexType { name, params } ] 
+        let (name, params, body, return_type) = proj!(output, 
+            Ast::Function { name, params, body, return_type }, 
+            (name, params, *body, *return_type));
 
-            => 0).collect::<Vec<_>>();
+        assert_eq!(name, "name".into());
+        assert_eq!(params.len(), 0);
+        
+        let var_name = proj!(body, Ast::Variable(x), x);
+        assert_eq!(var_name, "z".into());
 
-        assert_eq!(results.len(), 1);
+        let (index_name, mut index_params) = proj!(return_type, Ast::IndexType { name, params }, (name, params));
+        assert_eq!(index_name, "T3".into());
+        assert_eq!(index_params.len(), 3);
+
+        let t5 = proj!(index_params.pop().unwrap(), Ast::SimpleType(x), x);
+        assert_eq!(t5, "T5".into());
+
+        let t2 = proj!(index_params.pop().unwrap(), Ast::SimpleType(x), x);
+        assert_eq!(t2, "T2".into());
+        
+        let (index_name, mut index_params) = proj!(index_params.pop().unwrap(), Ast::IndexType{name, params}, (name, params));
+        assert_eq!(index_name, "T1".into());
+
+        let t4 = proj!(index_params.pop().unwrap(), Ast::SimpleType(x), x);
+        assert_eq!(t4, "T4".into());
     }
 
     /*
