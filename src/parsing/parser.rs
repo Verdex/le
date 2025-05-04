@@ -63,11 +63,11 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
 fn type_sig(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     fn simple(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         match input.get(ParseError::UnexpectedEof)? {
-            Token::Symbol(s, _) => Ok(Ast::SimpleType(Box::new(Ast::Symbol(s.clone())))),
+            Token::Symbol(s, _) => Ok(Ast::SimpleType(s.clone())),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
     }
-    fn index_end(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
+    fn index_end(input : &mut Parser<Token>) -> Result<Vec<Ast>, ParseError> {
         input.with_rollback(|input| {
             proj!(input, Token::LAngle(_), ())?;
             let first = type_sig(input)?;
@@ -77,28 +77,27 @@ fn type_sig(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
             })?;
             proj!(input, Token::RAngle(_), ())?;
             rest.insert(0, first);
-            Ok(Ast::SyntaxList(rest))
+            Ok(rest)
         })
     }
 
-    // TODO a bunch of the stuff here can be cleaned up after syntax list is removed
     let s = simple(input)?;
     match (s, index_end(input)) {
-        (Ast::SimpleType(n), Ok(index)) => Ok(Ast::IndexType{ name: Box::new(*n), params: Box::new(index) }),
+        (Ast::SimpleType(n), Ok(index)) => Ok(Ast::IndexType{ name: n.clone(), params: index }),
         (s, _) => Ok(s),
     }
 }
 
 fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     fn param(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-        let n = proj!(input, Token::Symbol(n, _), Ast::Symbol(n.clone()))?;
+        let n = proj!(input, Token::Symbol(n, _), n.clone())?;
         proj!(input, Token::Colon(_), ())?;
         let t = type_sig(input)?;
-        Ok(Ast::Slot { name: Box::new(n), ttype: Box::new(t) })
+        Ok(Ast::Slot { name: n, ttype: Box::new(t) })
     }
 
     proj!(input, Token::Symbol(n, _) if **n == *"fun", ())?;
-    let name = proj!(input, Token::Symbol(n, _), Ast::Symbol(n.clone()))?;
+    let name = proj!(input, Token::Symbol(n, _), n.clone())?;
     proj!(input, Token::LParen(_), ())?;
     let params = match input.option(|input| param(input))? {
         Some(first) => {
@@ -119,8 +118,8 @@ fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     proj!(input, Token::RCurl(_), ())?;
 
     Ok(Ast::Function { 
-        name: Box::new(name), 
-        params: Box::new(Ast::SyntaxList(params)),
+        name: name, 
+        params: params,
         return_type: Box::new(t),
         body: Box::new(e),
     })
@@ -131,7 +130,7 @@ fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         proj!(input, Token::Number(n, _), Ast::Number(n.clone()))
     }
     fn symbol(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-        proj!(input, Token::Symbol(s, _), Ast::Variable(Box::new(Ast::Symbol(s.clone()))))
+        proj!(input, Token::Symbol(s, _), Ast::Variable(s.clone()))
     }
     fn call(input : &mut Parser<Token>) -> Result<Box<dyn FnOnce(Ast) -> Ast>, ParseError> {
         proj!(input, Token::LParen(_), ())?;
@@ -147,7 +146,7 @@ fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
             None => vec![],
         };
         proj!(input, Token::RParen(_), ())?;
-        Ok(Box::new(move |x| Ast::Call { fun_expr: Box::new(x), inputs: Box::new(Ast::SyntaxList(params)) }))
+        Ok(Box::new(move |x| Ast::Call { fun_expr: Box::new(x), inputs: params }))
     }
     
     let mut e = input.or([number, symbol])?;
@@ -166,7 +165,7 @@ fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
 
 #[cfg(test)] 
 mod test {
-    use dealize::pattern::*;
+    use ordan::*;
 
     use super::*;
     use super::super::lexer;
@@ -175,7 +174,7 @@ mod test {
         ($input:expr, $p:pat, $e:expr) => { 
             match $input {
                 $p => $e,
-                _ => unreachable!(),
+                _ => panic!("proj failed"),
             }
         }
     }
@@ -192,21 +191,31 @@ mod test {
 
         let output = output.remove(0);
 
-        let first_pattern = cons("index-type", &[atom("T1".into()), exact_list(&[cons("simple-type", &[atom("T4".into())])])]);
-        let second_pattern = cons("simple-type", &[atom("T2".into())]);
-        let third_pattern = cons("simple-type", &[atom("T5".into())]);
+        let (name, params, body, return_type) = proj!(output, 
+            Ast::Function { name, params, body, return_type }, 
+            (name, params, *body, *return_type));
 
-        let pattern = cons("function", &[ atom("name".into())
-                                        , exact_list(&[])
-                                        , cons("index-type", 
-                                            &[ atom("T3".into())
-                                             , exact_list(&[ first_pattern, second_pattern, third_pattern ])
-                                             ])
-                                        , cons("variable", &[atom("z".into())])
-                                        ]);
-        let results = find(pattern, &output).collect::<Vec<_>>();
+        assert_eq!(name, "name".into());
+        assert_eq!(params.len(), 0);
         
-        assert_eq!(results.len(), 1);
+        let var_name = proj!(body, Ast::Variable(x), x);
+        assert_eq!(var_name, "z".into());
+
+        let (index_name, mut index_params) = proj!(return_type, Ast::IndexType { name, params }, (name, params));
+        assert_eq!(index_name, "T3".into());
+        assert_eq!(index_params.len(), 3);
+
+        let t5 = proj!(index_params.pop().unwrap(), Ast::SimpleType(x), x);
+        assert_eq!(t5, "T5".into());
+
+        let t2 = proj!(index_params.pop().unwrap(), Ast::SimpleType(x), x);
+        assert_eq!(t2, "T2".into());
+        
+        let (index_name, mut index_params) = proj!(index_params.pop().unwrap(), Ast::IndexType{name, params}, (name, params));
+        assert_eq!(index_name, "T1".into());
+
+        let t4 = proj!(index_params.pop().unwrap(), Ast::SimpleType(x), x);
+        assert_eq!(t4, "T4".into());
     }
 
     #[test]
@@ -218,16 +227,12 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("function", &[ atom("name".into())
-                                        , exact_list(&[])
-                                        , cons("index-type", &[ atom("T3".into())
-                                                              , exact_list(&[cons("simple-type", &[atom("T1".into())])])
-                                                              ])
-                                        , cons("variable", &[atom("z".into())])
-                                        ]);
-        let results = find(pattern, &output).collect::<Vec<_>>();
-        
-        assert_eq!(results.len(), 1);
+        let return_type = proj!(output, Ast::Function { return_type, .. }, *return_type);
+
+        let (name, params) = proj!(return_type, Ast::IndexType { name, params}, (name, params));
+
+        assert_eq!(name, "T3".into());
+        assert_eq!(params.len(), 1);
     }
 
     #[test]
@@ -239,14 +244,8 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("function", &[ atom("name".into())
-                                        , exact_list(&[])
-                                        , cons("simple-type", &[atom("T3".into())])
-                                        , cons("variable", &[atom("z".into())])
-                                        ]);
-        let results = find(pattern, &output).collect::<Vec<_>>();
-        
-        assert_eq!(results.len(), 1);
+        let params = proj!(output, Ast::Function { params, .. }, params);
+        assert_eq!(params.len(), 0);
     }
 
     #[test]
@@ -258,14 +257,8 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("function", &[ atom("name".into())
-                                        , exact_list(&[cons("slot", &[atom("x".into()), cons("simple-type", &[atom("T".into())])])])
-                                        , cons("simple-type", &[atom("T3".into())])
-                                        , cons("variable", &[atom("x".into())])
-                                        ]);
-        let results = find(pattern, &output).collect::<Vec<_>>();
-
-        assert_eq!(results.len(), 1);
+        let params = proj!(output, Ast::Function { params, .. }, params);
+        assert_eq!(params.len(), 1);
     }
     
     #[test]
@@ -277,16 +270,8 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("function", &[ atom("name".into())
-                                        , exact_list(&[ cons("slot", &[atom("x".into()), cons("simple-type", &[atom("T1".into())])])
-                                                      , cons("slot", &[atom("y".into()), cons("simple-type", &[atom("T2".into())])])
-                                                      ])
-                                        , cons("simple-type", &[atom("T3".into())])
-                                        , cons("variable", &[atom("x".into())])
-                                        ]);
-        let results = find(pattern, &output).collect::<Vec<_>>();
-
-        assert_eq!(results.len(), 1);
+        let params = proj!(output, Ast::Function { params, .. }, params);
+        assert_eq!(params.len(), 2);
     }
 
     #[test]
@@ -298,11 +283,9 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("variable", &[atom("var".into())]);
+        let name = proj!(output, Ast::Variable(x), x);
 
-        let results = find(pattern, &output).collect::<Vec<_>>();
-
-        assert_eq!(results.len(), 1);
+        assert_eq!(name, "var".into());
     }
 
     #[test]
@@ -314,11 +297,19 @@ mod test {
 
         let output = output.remove(0);
 
-        let pattern = cons("call", &[wild(), wild()]);
-
-        let results = find(pattern, &output).collect::<Vec<_>>();
-
+        let mut results = s_pattern!(output => 
+            [Ast::Call { fun_expr, inputs }] fun_expr;
+            [Ast::Call { fun_expr: inner, inputs: inner_inputs }] inner; 
+            [Ast::Variable(x)] 
+            => (inputs, inner_inputs, x)).collect::<Vec<_>>();
+        
         assert_eq!(results.len(), 1);
+
+        let (inputs, inner_inputs, name) = results.remove(0);
+
+        assert_eq!(*name, "blah".into());
+        assert_eq!(inputs.len(), 0);
+        assert_eq!(inner_inputs.len(), 3);
     }
 
     #[test]
@@ -330,14 +321,21 @@ mod test {
 
         let output = output.remove(0);
 
-        let param_1 = cons("variable", &[atom("val".into())]);
-        let param_2 = cons("variable", &[atom("two".into())]);
-        let param_3 = cons("variable", &[atom("other".into())]);
-        let pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[param_1, param_2, param_3])]);
+        let (fun_expr, mut inputs) = proj!(output, Ast::Call { fun_expr, inputs }, (*fun_expr, inputs));
 
-        let results = find(pattern, &output).collect::<Vec<_>>();
+        let name = proj!(fun_expr, Ast::Variable(x), x);
+        assert_eq!(name, "blah".into());
 
-        assert_eq!(results.len(), 1);
+        assert_eq!(inputs.len(), 3);
+
+        let name = proj!(inputs.remove(0), Ast::Variable(x), x);
+        assert_eq!(name, "val".into());
+
+        let name = proj!(inputs.remove(0), Ast::Variable(x), x);
+        assert_eq!(name, "two".into());
+
+        let name = proj!(inputs.remove(0), Ast::Variable(x), x);
+        assert_eq!(name, "other".into());
     }
 
     #[test]
@@ -349,12 +347,17 @@ mod test {
 
         let output = output.remove(0);
 
-        let param_pattern = cons("variable", &[atom("val".into())]);
-        let pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[param_pattern])]);
+        let (fun_expr, mut inputs) = proj!(output, Ast::Call{fun_expr, inputs}, (*fun_expr, inputs));
 
-        let results = find(pattern, &output).collect::<Vec<_>>();
+        let name = proj!(fun_expr, Ast::Variable(x), x);
+        assert_eq!(name, "blah".into());
 
-        assert_eq!(results.len(), 1);
+        assert_eq!(inputs.len(), 1);
+
+        let input = inputs.remove(0);
+
+        let name = proj!(input, Ast::Variable(x), x);
+        assert_eq!(name, "val".into());
     }
 
     #[test]
@@ -366,12 +369,19 @@ mod test {
 
         let output = output.remove(0);
 
-        let inner_pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[])]);
-        let pattern = cons("call", &[inner_pattern, exact_list(&[])]);
-
-        let results = find(pattern, &output).collect::<Vec<_>>();
-
+        let mut results = s_pattern!(output => 
+            [Ast::Call { fun_expr, inputs } ] fun_expr; 
+            [Ast::Call { fun_expr: inner_expr, inputs: inner_input }] inner_expr; 
+            [Ast::Variable(name)]
+            => (inputs, inner_input, name)).collect::<Vec<_>>();
+        
         assert_eq!(results.len(), 1);
+
+        let (inputs, inner_input, name) = results.remove(0);
+
+        assert_eq!(*name, "blah".into());
+        assert_eq!(inputs.len(), 0);
+        assert_eq!(inner_input.len(), 0);
     }
 
     #[test]
@@ -382,12 +392,13 @@ mod test {
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
+        let (fun_expr, inputs) = proj!(output, Ast::Call { fun_expr, inputs }, (*fun_expr, inputs));
 
-        let pattern = cons("call", &[cons("variable", &[atom("blah".into())]), exact_list(&[])]);
+        assert_eq!(inputs.len(), 0);
 
-        let results = find(pattern, &output).collect::<Vec<_>>();
+        let var = proj!(fun_expr, Ast::Variable(x), x);
 
-        assert_eq!(results.len(), 1);
+        assert_eq!(var, "blah".into());
     }
 
     #[test]
@@ -399,5 +410,4 @@ mod test {
         let output = proj!(output.remove(0), Ast::Number(v), v);
         assert_eq!(output, "100".into());
     }
-
 }

@@ -7,4 +7,4 @@ edition = "2024"
 
 [dependencies]
 jlnexus = { git = "https://www.github.com/verdex/jlnexus", version = "1.0.0", tag = "release-1.0.0" }
-dealize = { git = "https://www.github.com/verdex/dealize", version = "0.7.0", tag = "release-0.7.0" }
+ordan = { git = "https://www.github.com/verdex/ordan", version = "1.0.0", tag = "release-1.0.0" }

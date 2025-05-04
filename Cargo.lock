@@ -3,11 +3,6 @@
 version = 4
 
 [[package]]
-name = "dealize"
-version = "0.7.0"
-source = "git+https://www.github.com/verdex/dealize?tag=release-0.7.0#dd92865c70a34cb6831e066848362a9a33c1c84e"
-
-[[package]]
 name = "jlnexus"
 version = "1.0.0"
 source = "git+https://www.github.com/verdex/jlnexus?tag=release-1.0.0#158bb5fc8f0fcf991442dbede9e729e553b0013c"
@@ -16,6 +11,14 @@ source = "git+https://www.github.com/verdex/jlnexus?tag=release-1.0.0#158bb5fc8f
 name = "le"
 version = "0.1.0"
 dependencies = [
- "dealize",
+ "jlnexus",
+ "ordan",
+]
+
+[[package]]
+name = "ordan"
+version = "1.0.0"
+source = "git+https://www.github.com/verdex/ordan?tag=release-1.0.0#2ac17c28ba2ff03a01b663f8107f514f451db7c1"
+dependencies = [
  "jlnexus",
 ]

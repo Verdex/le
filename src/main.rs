@@ -1,8 +1,6 @@
 
 mod data;
 mod parsing;
-mod compiler;
-mod vm;
 
 use std::io::{self, Write};
 
@@ -12,7 +10,12 @@ pub fn main() {
         io::stdout().flush().unwrap(); // TODO error
         let input = read().unwrap(); // TODO handle error scenario here
         let tokens = parsing::lexer::lex(input).unwrap(); // TODO error
+
+        // TODO
+        let _ = tokens.iter().map(|x| x.error()).collect::<Vec<_>>();
+
         let ast = parsing::parser::parse(tokens).unwrap(); // TODO error
+
 
         println!("{:?}", ast);
 
