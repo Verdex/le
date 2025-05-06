@@ -1,6 +1,6 @@
 
+use std::rc::Rc;
 use jlnexus::Parser;
-
 use crate::data::{ Meta, Token };
 
 macro_rules! lex_char {
@@ -173,7 +173,7 @@ fn symbol(input : &mut Parser<char>) -> Result<Token, LexError> {
     let mut rest = input.list(|input| input.or([letter, digit, underscore]))?;
     rest.insert(0, first);
 
-    let s : Box<str> = rest.into_iter().collect();
+    let s : Rc<str> = rest.into_iter().collect::<String>().into();
     let len = s.len();
     Ok(Token::Symbol(s, Meta::range(start, start + len)))
 }
@@ -193,7 +193,7 @@ fn number(input : &mut Parser<char>) -> Result<Token, LexError> {
         Err(LexError::NegativeNumberNeedsDigits(start))
     }
     else {
-        let n : Box<str> = rest.into_iter().collect();
+        let n : Rc<str> = rest.into_iter().collect::<String>().into();
         let len = n.len();
         Ok(Token::Number(n, Meta::range(start, start + len)))
     }

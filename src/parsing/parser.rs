@@ -1,5 +1,6 @@
 
 use std::error::Error;
+use std::rc::Rc;
 use jlnexus::Parser;
 use crate::data::{ Token, Ast };
 
@@ -63,7 +64,7 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
 fn type_sig(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     fn simple(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         match input.get(ParseError::UnexpectedEof)? {
-            Token::Symbol(s, _) => Ok(Ast::SimpleType(s.clone())),
+            Token::Symbol(s, _) => Ok(Ast::SimpleType(Rc::clone(s))),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
     }
@@ -90,14 +91,14 @@ fn type_sig(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
 
 fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     fn param(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-        let n = proj!(input, Token::Symbol(n, _), n.clone())?;
+        let n = proj!(input, Token::Symbol(n, _), Rc::clone(n))?;
         proj!(input, Token::Colon(_), ())?;
         let t = type_sig(input)?;
         Ok(Ast::Slot { name: n, ttype: Box::new(t) })
     }
 
     proj!(input, Token::Symbol(n, _) if **n == *"fun", ())?;
-    let name = proj!(input, Token::Symbol(n, _), n.clone())?;
+    let name = proj!(input, Token::Symbol(n, _), Rc::clone(n))?;
     proj!(input, Token::LParen(_), ())?;
     let params = match input.option(|input| param(input))? {
         Some(first) => {
@@ -127,10 +128,10 @@ fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
 
 fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     fn number(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-        proj!(input, Token::Number(n, _), Ast::Number(n.clone()))
+        proj!(input, Token::Number(n, _), Ast::Number(Rc::clone(n)))
     }
     fn symbol(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-        proj!(input, Token::Symbol(s, _), Ast::Variable(s.clone()))
+        proj!(input, Token::Symbol(s, _), Ast::Variable(Rc::clone(s)))
     }
     fn call(input : &mut Parser<Token>) -> Result<Box<dyn FnOnce(Ast) -> Ast>, ParseError> {
         proj!(input, Token::LParen(_), ())?;

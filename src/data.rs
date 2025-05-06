@@ -1,4 +1,6 @@
 
+use std::rc::Rc;
+
 #[derive(Debug, Clone)]
 pub struct Meta {
     pub start : usize,
@@ -14,13 +16,11 @@ impl Meta {
     }
 }
 
-// TODO Box<str> -> Rc<str>
-
 #[derive(Debug, Clone)]
 pub enum Token {
-    Number(Box<str>, Meta),
-    Symbol(Box<str>, Meta),
-    String(Box<str>, Meta),
+    Number(Rc<str>, Meta),
+    Symbol(Rc<str>, Meta),
+    String(Rc<str>, Meta),
     LSquare(Meta),
     RSquare(Meta),
     LCurl(Meta),
@@ -67,17 +67,17 @@ impl Token {
 
 #[derive(Debug, PartialEq)]
 pub enum Ast {
-    Number(Box<str>), 
-    Slot { name : Box<str>, ttype : Box<Ast> },
-    SimpleType(Box<str>),
-    IndexType{ name : Box<str>, params : Vec<Ast> },
-    Variable(Box<str>),
+    Number(Rc<str>), 
+    Slot { name : Rc<str>, ttype : Box<Ast> },
+    SimpleType(Rc<str>),
+    IndexType{ name : Rc<str>, params : Vec<Ast> },
+    Variable(Rc<str>),
     Call { 
         fun_expr : Box<Ast>,
         inputs : Vec<Ast>,
     },
     Function {
-        name : Box<str>,
+        name : Rc<str>,
         params : Vec<Ast>,
         return_type : Box<Ast>,
         body : Box<Ast>,
