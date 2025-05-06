@@ -40,27 +40,27 @@ pub enum Token {
 }
 
 impl Token { 
-    pub fn error(&self) -> (usize, usize) {
+    pub fn meta(&self) -> Meta {
         match self {
-            Token::Number(_, m) => (m.start, m.end),
-            Token::Symbol(_, m) => (m.start, m.end),
-            Token::String(_, m) => (m.start, m.end),
-            Token::LSquare(m) => (m.start, m.end),
-            Token::RSquare(m) => (m.start, m.end),
-            Token::LCurl(m) => (m.start, m.end),
-            Token::RCurl(m) => (m.start, m.end),
-            Token::LParen(m) => (m.start, m.end),
-            Token::RParen(m) => (m.start, m.end),
-            Token::LAngle(m) => (m.start, m.end),
-            Token::RAngle(m) => (m.start, m.end),
-            Token::Dot(m) => (m.start, m.end),
-            Token::Comma(m) => (m.start, m.end),
-            Token::Semicolon(m) => (m.start, m.end),
-            Token::Colon(m) => (m.start, m.end),
-            Token::Equal(m) => (m.start, m.end),
-            Token::RArrow(m) => (m.start, m.end),
-            Token::R2Arrow(m) => (m.start, m.end),
-            Token::Triangle(_, m) => (m.start, m.end), 
+            Token::Number(_, m) => m.clone(),
+            Token::Symbol(_, m) => m.clone(),
+            Token::String(_, m) => m.clone(),
+            Token::LSquare(m) => m.clone(),
+            Token::RSquare(m) => m.clone(),
+            Token::LCurl(m) => m.clone(),
+            Token::RCurl(m) => m.clone(),
+            Token::LParen(m) => m.clone(),
+            Token::RParen(m) => m.clone(),
+            Token::LAngle(m) => m.clone(),
+            Token::RAngle(m) => m.clone(),
+            Token::Dot(m) => m.clone(),
+            Token::Comma(m) => m.clone(),
+            Token::Semicolon(m) => m.clone(),
+            Token::Colon(m) => m.clone(),
+            Token::Equal(m) => m.clone(),
+            Token::RArrow(m) => m.clone(),
+            Token::R2Arrow(m) => m.clone(),
+            Token::Triangle(_, m) => m.clone(),
         }
     }
 }
