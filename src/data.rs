@@ -65,7 +65,7 @@ impl Token {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum Ast {
     Number(Rc<str>), 
     Slot { name : Rc<str>, ttype : Box<Ast> },
