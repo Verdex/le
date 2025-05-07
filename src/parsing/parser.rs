@@ -2,7 +2,7 @@
 use std::error::Error;
 use std::rc::Rc;
 use jlnexus::Parser;
-use crate::data::{ Token, Ast, Slot };
+use crate::data::{ Token, Ast, Slot, LeType };
 
 
 macro_rules! proj {
@@ -61,14 +61,14 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
     Ok(top_level)
 }
 
-fn type_sig(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-    fn simple(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
+fn type_sig(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
+    fn simple(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
         match input.get(ParseError::UnexpectedEof)? {
-            Token::Symbol(s, _) => Ok(Ast::SimpleType(Rc::clone(s))),
+            Token::Symbol(s, _) => Ok(LeType::SimpleType(Rc::clone(s))),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
     }
-    fn index_end(input : &mut Parser<Token>) -> Result<Vec<Ast>, ParseError> {
+    fn index_end(input : &mut Parser<Token>) -> Result<Vec<LeType>, ParseError> {
         input.with_rollback(|input| {
             proj!(input, Token::LAngle(_), ())?;
             let first = type_sig(input)?;
@@ -84,7 +84,7 @@ fn type_sig(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
 
     let s = simple(input)?;
     match (s, index_end(input)) {
-        (Ast::SimpleType(n), Ok(index)) => Ok(Ast::IndexType{ name: n.clone(), params: index }),
+        (LeType::SimpleType(n), Ok(index)) => Ok(LeType::IndexType{ name: n, params: index }),
         (s, _) => Ok(s),
     }
 }
@@ -94,7 +94,7 @@ fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         let n = proj!(input, Token::Symbol(n, _), Rc::clone(n))?;
         proj!(input, Token::Colon(_), ())?;
         let t = type_sig(input)?;
-        Ok(Slot { name: n, ttype: Box::new(t) })
+        Ok(Slot { name: n, ttype: t })
     }
 
     proj!(input, Token::Symbol(n, _) if **n == *"fun", ())?;
@@ -121,7 +121,7 @@ fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     Ok(Ast::Function { 
         name: name, 
         params: params,
-        return_type: Box::new(t),
+        return_type: t,
         body: Box::new(e),
     })
 }
@@ -194,7 +194,7 @@ mod test {
 
         let (name, params, body, return_type) = proj!(output, 
             Ast::Function { name, params, body, return_type }, 
-            (name, params, *body, *return_type));
+            (name, params, *body, return_type));
 
         assert_eq!(name, "name".into());
         assert_eq!(params.len(), 0);
@@ -202,20 +202,20 @@ mod test {
         let var_name = proj!(body, Ast::Variable(x), x);
         assert_eq!(var_name, "z".into());
 
-        let (index_name, mut index_params) = proj!(return_type, Ast::IndexType { name, params }, (name, params));
+        let (index_name, mut index_params) = proj!(return_type, LeType::IndexType { name, params }, (name, params));
         assert_eq!(index_name, "T3".into());
         assert_eq!(index_params.len(), 3);
 
-        let t5 = proj!(index_params.pop().unwrap(), Ast::SimpleType(x), x);
+        let t5 = proj!(index_params.pop().unwrap(), LeType::SimpleType(x), x);
         assert_eq!(t5, "T5".into());
 
-        let t2 = proj!(index_params.pop().unwrap(), Ast::SimpleType(x), x);
+        let t2 = proj!(index_params.pop().unwrap(), LeType::SimpleType(x), x);
         assert_eq!(t2, "T2".into());
         
-        let (index_name, mut index_params) = proj!(index_params.pop().unwrap(), Ast::IndexType{name, params}, (name, params));
+        let (index_name, mut index_params) = proj!(index_params.pop().unwrap(), LeType::IndexType{name, params}, (name, params));
         assert_eq!(index_name, "T1".into());
 
-        let t4 = proj!(index_params.pop().unwrap(), Ast::SimpleType(x), x);
+        let t4 = proj!(index_params.pop().unwrap(), LeType::SimpleType(x), x);
         assert_eq!(t4, "T4".into());
     }
 
@@ -228,9 +228,9 @@ mod test {
 
         let output = output.remove(0);
 
-        let return_type = proj!(output, Ast::Function { return_type, .. }, *return_type);
+        let return_type = proj!(output, Ast::Function { return_type, .. }, return_type);
 
-        let (name, params) = proj!(return_type, Ast::IndexType { name, params}, (name, params));
+        let (name, params) = proj!(return_type, LeType::IndexType { name, params}, (name, params));
 
         assert_eq!(name, "T3".into());
         assert_eq!(params.len(), 1);

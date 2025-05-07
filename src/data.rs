@@ -66,16 +66,20 @@ impl Token {
 }
 
 #[derive(Debug)]
+pub enum LeType {
+    SimpleType(Rc<str>),
+    IndexType { name : Rc<str>, params : Vec<LeType> },
+}
+
+#[derive(Debug)]
 pub struct Slot {
     pub name : Rc<str>,
-    pub ttype : Box<Ast>,
+    pub ttype : LeType,
 }
 
 #[derive(Debug)]
 pub enum Ast {
     Number(Rc<str>), 
-    SimpleType(Rc<str>),
-    IndexType { name : Rc<str>, params : Vec<Ast> },
     Variable(Rc<str>),
     Call { 
         fun_expr : Box<Ast>,
@@ -84,7 +88,7 @@ pub enum Ast {
     Function {
         name : Rc<str>,
         params : Vec<Slot>,
-        return_type : Box<Ast>,
+        return_type : LeType,
         body : Box<Ast>,
     },
 }
