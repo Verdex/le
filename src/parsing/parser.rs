@@ -2,7 +2,7 @@
 use std::error::Error;
 use std::rc::Rc;
 use jlnexus::Parser;
-use crate::data::{ Token, Ast };
+use crate::data::{ Token, Ast, Slot };
 
 
 macro_rules! proj {
@@ -90,11 +90,11 @@ fn type_sig(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
 }
 
 fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-    fn param(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
+    fn param(input : &mut Parser<Token>) -> Result<Slot, ParseError> {
         let n = proj!(input, Token::Symbol(n, _), Rc::clone(n))?;
         proj!(input, Token::Colon(_), ())?;
         let t = type_sig(input)?;
-        Ok(Ast::Slot { name: n, ttype: Box::new(t) })
+        Ok(Slot { name: n, ttype: Box::new(t) })
     }
 
     proj!(input, Token::Symbol(n, _) if **n == *"fun", ())?;
