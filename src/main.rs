@@ -7,8 +7,17 @@ use std::io::{self, Write};
 pub fn main() {
     loop {
         print!("> ");
-        io::stdout().flush().unwrap(); // TODO error
-        let input = read().unwrap(); // TODO handle error scenario here
+
+        match io::stdout().flush() {
+            Err(e) => panic!("encountered io error: {e}"),
+            _ => { },
+        }
+
+        let input = match read() {
+            Ok(input) => input,
+            Err(e) => panic!("encountered io error: {e}"),
+        };
+
         let tokens = parsing::lexer::lex(input).unwrap(); // TODO error
 
         // TODO
