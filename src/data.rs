@@ -85,7 +85,7 @@ pub enum Ast {
         fun_expr : Box<Ast>,
         args : Vec<Ast>,
     },
-    Function {
+    Fun {
         name : Rc<str>,
         params : Vec<Slot>,
         return_type : LeType,

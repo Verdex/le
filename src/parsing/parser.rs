@@ -118,7 +118,7 @@ fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     let e = expr(input)?;
     proj!(input, Token::RCurl(_), ())?;
 
-    Ok(Ast::Function { 
+    Ok(Ast::Fun { 
         name: name, 
         params: params,
         return_type: t,
@@ -193,7 +193,7 @@ mod test {
         let output = output.remove(0);
 
         let (name, params, body, return_type) = proj!(output, 
-            Ast::Function { name, params, body, return_type }, 
+            Ast::Fun { name, params, body, return_type }, 
             (name, params, *body, return_type));
 
         assert_eq!(name, "name".into());
@@ -228,7 +228,7 @@ mod test {
 
         let output = output.remove(0);
 
-        let return_type = proj!(output, Ast::Function { return_type, .. }, return_type);
+        let return_type = proj!(output, Ast::Fun { return_type, .. }, return_type);
 
         let (name, params) = proj!(return_type, LeType::IndexType { name, params}, (name, params));
 
@@ -245,7 +245,7 @@ mod test {
 
         let output = output.remove(0);
 
-        let params = proj!(output, Ast::Function { params, .. }, params);
+        let params = proj!(output, Ast::Fun { params, .. }, params);
         assert_eq!(params.len(), 0);
     }
 
@@ -258,7 +258,7 @@ mod test {
 
         let output = output.remove(0);
 
-        let params = proj!(output, Ast::Function { params, .. }, params);
+        let params = proj!(output, Ast::Fun { params, .. }, params);
         assert_eq!(params.len(), 1);
     }
     
@@ -271,7 +271,7 @@ mod test {
 
         let output = output.remove(0);
 
-        let params = proj!(output, Ast::Function { params, .. }, params);
+        let params = proj!(output, Ast::Fun { params, .. }, params);
         assert_eq!(params.len(), 2);
     }
 
