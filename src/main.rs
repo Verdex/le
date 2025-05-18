@@ -18,7 +18,10 @@ pub fn main() {
             Err(e) => panic!("encountered io error: {e}"),
         };
 
-        let tokens = parsing::lexer::lex(input).unwrap(); // TODO error
+        let tokens = match parsing::lexer::lex(input) {
+            Ok(tokens) => tokens,
+            Err(e) => panic!("encountered lexing error: {e}"),
+        };
 
         // TODO
         let _ = tokens.iter().map(|x| x.meta()).collect::<Vec<_>>();
