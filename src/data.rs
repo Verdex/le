@@ -80,7 +80,7 @@ pub struct Slot {
 #[derive(Debug)]
 pub enum Ast {
     Number(Rc<str>), 
-    Variable(Rc<str>),
+    Var(Rc<str>),
     Call { 
         fun_expr : Box<Ast>,
         args : Vec<Ast>,
