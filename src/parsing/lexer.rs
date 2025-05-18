@@ -67,7 +67,7 @@ impl From<Vec<LexError>> for LexError {
 
 impl std::error::Error for LexError { }
 
-pub fn lex(input : Box<str>) -> Result<Vec<Token>, LexError> {
+pub fn lex(input : Rc<str>) -> Result<Vec<Token>, LexError> {
     let input = input.chars().collect::<Vec<_>>();
     let mut buffer = Parser::new(&input);
 

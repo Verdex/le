@@ -2,6 +2,7 @@
 mod data;
 mod parsing;
 
+use std::rc::Rc;
 use std::io::{self, Write};
 
 pub fn main() {
@@ -35,7 +36,7 @@ pub fn main() {
     }
 }
 
-fn read() -> io::Result<Box<str>> {
+fn read() -> io::Result<Rc<str>> {
     let mut s = String::new();
     io::stdin().read_line(&mut s)?;
     Ok(s.into())
