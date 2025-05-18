@@ -147,7 +147,7 @@ fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
             None => vec![],
         };
         proj!(input, Token::RParen(_), ())?;
-        Ok(Box::new(move |x| Ast::Call { fun_expr: Box::new(x), inputs: params }))
+        Ok(Box::new(move |x| Ast::Call { fun_expr: Box::new(x), args: params }))
     }
     
     let mut e = input.or([number, symbol])?;
@@ -299,10 +299,10 @@ mod test {
         let output = output.remove(0);
 
         let mut results = s_pattern!(output => 
-            [Ast::Call { fun_expr, inputs }] fun_expr;
-            [Ast::Call { fun_expr: inner, inputs: inner_inputs }] inner; 
+            [Ast::Call { fun_expr, args }] fun_expr;
+            [Ast::Call { fun_expr: inner, args: inner_args }] inner; 
             [Ast::Variable(x)] 
-            => (inputs, inner_inputs, x)).collect::<Vec<_>>();
+            => (args, inner_args, x)).collect::<Vec<_>>();
         
         assert_eq!(results.len(), 1);
 
@@ -322,20 +322,20 @@ mod test {
 
         let output = output.remove(0);
 
-        let (fun_expr, mut inputs) = proj!(output, Ast::Call { fun_expr, inputs }, (*fun_expr, inputs));
+        let (fun_expr, mut args) = proj!(output, Ast::Call { fun_expr, args }, (*fun_expr, args));
 
         let name = proj!(fun_expr, Ast::Variable(x), x);
         assert_eq!(name, "blah".into());
 
-        assert_eq!(inputs.len(), 3);
+        assert_eq!(args.len(), 3);
 
-        let name = proj!(inputs.remove(0), Ast::Variable(x), x);
+        let name = proj!(args.remove(0), Ast::Variable(x), x);
         assert_eq!(name, "val".into());
 
-        let name = proj!(inputs.remove(0), Ast::Variable(x), x);
+        let name = proj!(args.remove(0), Ast::Variable(x), x);
         assert_eq!(name, "two".into());
 
-        let name = proj!(inputs.remove(0), Ast::Variable(x), x);
+        let name = proj!(args.remove(0), Ast::Variable(x), x);
         assert_eq!(name, "other".into());
     }
 
@@ -348,16 +348,16 @@ mod test {
 
         let output = output.remove(0);
 
-        let (fun_expr, mut inputs) = proj!(output, Ast::Call{fun_expr, inputs}, (*fun_expr, inputs));
+        let (fun_expr, mut args) = proj!(output, Ast::Call{fun_expr, args}, (*fun_expr, args));
 
         let name = proj!(fun_expr, Ast::Variable(x), x);
         assert_eq!(name, "blah".into());
 
-        assert_eq!(inputs.len(), 1);
+        assert_eq!(args.len(), 1);
 
-        let input = inputs.remove(0);
+        let arg = args.remove(0);
 
-        let name = proj!(input, Ast::Variable(x), x);
+        let name = proj!(arg, Ast::Variable(x), x);
         assert_eq!(name, "val".into());
     }
 
@@ -371,10 +371,10 @@ mod test {
         let output = output.remove(0);
 
         let mut results = s_pattern!(output => 
-            [Ast::Call { fun_expr, inputs } ] fun_expr; 
-            [Ast::Call { fun_expr: inner_expr, inputs: inner_input }] inner_expr; 
+            [Ast::Call { fun_expr, args } ] fun_expr; 
+            [Ast::Call { fun_expr: inner_expr, args: inner_args }] inner_expr; 
             [Ast::Variable(name)]
-            => (inputs, inner_input, name)).collect::<Vec<_>>();
+            => (args, inner_args, name)).collect::<Vec<_>>();
         
         assert_eq!(results.len(), 1);
 
@@ -393,7 +393,7 @@ mod test {
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
-        let (fun_expr, inputs) = proj!(output, Ast::Call { fun_expr, inputs }, (*fun_expr, inputs));
+        let (fun_expr, inputs) = proj!(output, Ast::Call { fun_expr, args}, (*fun_expr, args));
 
         assert_eq!(inputs.len(), 0);
 

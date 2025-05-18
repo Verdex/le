@@ -83,7 +83,7 @@ pub enum Ast {
     Variable(Rc<str>),
     Call { 
         fun_expr : Box<Ast>,
-        inputs : Vec<Ast>,
+        args : Vec<Ast>,
     },
     Function {
         name : Rc<str>,
