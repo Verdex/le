@@ -44,7 +44,7 @@ fn read() -> io::Result<Rc<str>> {
     Ok(s.into())
 }
 
-fn report_error(input : Rc<str>, m : Meta) -> String {
+fn report_error(input : Rc<str>, start : usize, end : usize) -> String {
     let mut prev = vec![];
     let mut line = vec![];
     let mut prev_line_end_index = 0;
@@ -53,12 +53,12 @@ fn report_error(input : Rc<str>, m : Meta) -> String {
     let mut underline_prefix_len = 0;
 
     while let Some((index, c)) = input.next() {
-        if index == m.start {
+        if index == start {
             underline_prefix_len = line.len();
         }
 
         if c == '\n' || c == '\r' {
-            if prev_line_end_index <= m.start && m.end <= index {
+            if prev_line_end_index <= start && end <= index {
                 break;
             }
             
@@ -75,7 +75,7 @@ fn report_error(input : Rc<str>, m : Meta) -> String {
     let line = line.into_iter().collect::<String>();
     let prev = prev.into_iter().collect::<String>();
 
-    let underline = format!("{}{}", " ".repeat(underline_prefix_len), "-".repeat(m.end - m.start + 1));
+    let underline = format!("{}{}", " ".repeat(underline_prefix_len), "-".repeat(end - start + 1));
 
     [prev, line, underline, next].into_iter().filter(|x| x.len() > 0).collect::<Vec<_>>().join("\n")
 }
@@ -86,25 +86,25 @@ mod test {
 
     #[test]
     fn should_handle_initial_line_failure() {
-        let output = report_error("single\ndouble\ntriple".into(), Meta::single(1));
+        let output = report_error("single\ndouble\ntriple".into(), 1, 1);
         assert_eq!(output, "single\n -\ndouble");
     }
 
     #[test]
     fn should_handle_final_line_failure() {
-        let output = report_error("single\ndouble\ntriple".into(), Meta::single(14));
+        let output = report_error("single\ndouble\ntriple".into(), 14, 14);
         assert_eq!(output, "double\ntriple\n-");
     }
 
     #[test]
     fn should_handle_middle_line_failure() {
-        let output = report_error("single\ndouble\ntriple".into(), Meta::single(8));
+        let output = report_error("single\ndouble\ntriple".into(), 8, 8);
         assert_eq!(output, "single\ndouble\n -\ntriple");
     }
 
     #[test]
     fn should_handle_range_underline() {
-        let output = report_error("single\ndouble\ntriple".into(), Meta::range(9, 11));
+        let output = report_error("single\ndouble\ntriple".into(), 9, 11);
         assert_eq!(output, "single\ndouble\n  ---\ntriple");
     }
 }
