@@ -58,7 +58,7 @@ fn report_error(input : Rc<str>, m : Meta) -> String {
         }
 
         if c == '\n' || c == '\r' {
-            if prev_line_end_index <= m.start {
+            if prev_line_end_index <= m.start && m.end <= index {
                 break;
             }
             
@@ -75,7 +75,7 @@ fn report_error(input : Rc<str>, m : Meta) -> String {
     let line = line.into_iter().collect::<String>();
     let prev = prev.into_iter().collect::<String>();
 
-    let underline = format!("{}{}", " ".repeat(underline_prefix_len), "-".repeat(m.end - m.start));
+    let underline = format!("{}{}", " ".repeat(underline_prefix_len), "-".repeat(m.end - m.start + 1));
 
     [prev, line, underline, next].into_iter().filter(|x| x.len() > 0).collect::<Vec<_>>().join("\n")
 }
