@@ -85,8 +85,26 @@ mod test {
     use super::*;
 
     #[test]
-    fn blarg() {
-        let output = report_error("single\ndouble\ntriple".into(), Meta::single(7));
-        assert_eq!(output, "");
+    fn should_handle_initial_line_failure() {
+        let output = report_error("single\ndouble\ntriple".into(), Meta::single(1));
+        assert_eq!(output, "single\n -\ndouble");
+    }
+
+    #[test]
+    fn should_handle_final_line_failure() {
+        let output = report_error("single\ndouble\ntriple".into(), Meta::single(14));
+        assert_eq!(output, "double\ntriple\n-");
+    }
+
+    #[test]
+    fn should_handle_middle_line_failure() {
+        let output = report_error("single\ndouble\ntriple".into(), Meta::single(8));
+        assert_eq!(output, "single\ndouble\n -\ntriple");
+    }
+
+    #[test]
+    fn should_handle_range_underline() {
+        let output = report_error("single\ndouble\ntriple".into(), Meta::range(9, 11));
+        assert_eq!(output, "single\ndouble\n  ---\ntriple");
     }
 }
