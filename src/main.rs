@@ -49,11 +49,16 @@ fn report_error(input : Rc<str>, m : Meta) -> String {
     let mut line = vec![];
     let mut prev_line_end_index = 0;
 
-    let mut x = input.char_indices();
+    let mut input = input.char_indices();
+    let mut underline_prefix_len = 0;
 
-    while let Some((index, c)) = x.next() {
+    while let Some((index, c)) = input.next() {
+        if index == m.start {
+            underline_prefix_len = line.len();
+        }
+
         if c == '\n' || c == '\r' {
-            if prev_line_end_index <= m.start && m.end <= index {
+            if prev_line_end_index <= m.start {
                 break;
             }
             
@@ -66,11 +71,13 @@ fn report_error(input : Rc<str>, m : Meta) -> String {
         }
     }
 
-    let next = x.map(|w| w.1).take_while(|w| *w != '\n' && *w != '\r').collect::<String>();
+    let next = input.map(|w| w.1).take_while(|w| *w != '\n' && *w != '\r').collect::<String>();
     let line = line.into_iter().collect::<String>();
     let prev = prev.into_iter().collect::<String>();
 
-    format!("{prev}\n{line}\n{next}")
+    let underline = format!("{}{}", " ".repeat(underline_prefix_len), "-".repeat(m.end - m.start));
+
+    [prev, line, underline, next].into_iter().filter(|x| x.len() > 0).collect::<Vec<_>>().join("\n")
 }
 
 #[cfg(test)]
