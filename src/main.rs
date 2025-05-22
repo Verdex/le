@@ -5,6 +5,7 @@ mod parsing;
 use std::rc::Rc;
 use std::io::{self, Write};
 
+use crate::parsing::lexer::{self, LexError};
 use crate::data::{Meta};
 
 pub fn main() {
@@ -21,9 +22,22 @@ pub fn main() {
             Err(e) => panic!("encountered io error: {e}"),
         };
 
-        let tokens = match parsing::lexer::lex(input) {
+        let tokens = match lexer::lex(Rc::clone(&input)) {
             Ok(tokens) => tokens,
-            Err(e) => panic!("encountered lexing error: {e}"),
+            Err(e) => {
+
+                let mut error_highlights = lex_error_locs(&e)
+                    .into_iter()
+                    .map(|x| report_error(Rc::clone(&input), x, x))
+                    .collect::<Vec<_>>();
+
+                error_highlights.sort();
+                error_highlights.dedup();
+                
+                let error_highlight = error_highlights.join("\n");
+
+                panic!("encountered lexing error:\n{error_highlight}\n\n{e}");
+            }
         };
 
         // TODO
@@ -42,6 +56,20 @@ fn read() -> io::Result<Rc<str>> {
     let mut s = String::new();
     io::stdin().read_line(&mut s)?;
     Ok(s.into())
+}
+
+fn lex_error_locs(error : &LexError) -> Vec<usize> {
+    match error {
+        LexError::StringEof => vec![],
+        LexError::BlockCommentEof => vec![],
+        LexError::UnexpectedEof => vec![], 
+        LexError::UnknownEscape(_, n) => vec![*n],
+        LexError::UnexpectedChar(_, _, loc) => vec![*loc],
+        LexError::NumberWithMultipleDots(_, loc) => vec![*loc],
+        LexError::NegativeNumberNeedsDigits(loc) => vec![*loc],
+        LexError::Aggregate(errors) => 
+            errors.into_iter().flat_map(lex_error_locs).collect(),
+    }
 }
 
 fn report_error(input : Rc<str>, start : usize, end : usize) -> String {
