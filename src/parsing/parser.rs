@@ -28,10 +28,12 @@ pub enum ParseError {
 }
 
 impl std::fmt::Display for ParseError {
-    fn fmt(&self, _f : &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            //ParseError::?? => write!(f, "", ... ),
-            _ => todo!(),
+            ParseError::UnexpectedToken(t) => write!(f, "encountered unexpected token {:?}", t),
+            ParseError::UnexpectedEof => write!(f, "encountered unexpected eof"),
+            ParseError::Aggregate(errors) => write!(f, "encountered error list:\n{}", 
+                errors.into_iter().map(|x| format!("  {}\n", x)).collect::<Vec<_>>().join("")),
         }
     }
 }
