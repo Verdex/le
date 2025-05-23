@@ -6,6 +6,7 @@ use std::rc::Rc;
 use std::io::{self, Write};
 
 use crate::parsing::lexer::{self, LexError};
+use crate::parsing::parser::{self, ParseError};
 use crate::data::{Meta};
 
 pub fn main() {
@@ -43,7 +44,22 @@ pub fn main() {
         // TODO
         let _ = tokens.iter().map(|x| x.meta()).collect::<Vec<_>>();
 
-        let ast = parsing::parser::parse(tokens).unwrap(); // TODO error
+        let ast = match parser::parse(tokens) {
+            Ok(ast) => ast,
+            Err(e) => {
+                let mut error_highlights = parse_error_locs(&e)
+                    .into_iter()
+                    .map(|x| report_error(Rc::clone(&input), x.start, x.end))
+                    .collect::<Vec<_>>();
+
+                error_highlights.sort();
+                error_highlights.dedup();
+                
+                let error_highlight = error_highlights.join("\n");
+
+                panic!("encountered parsing error:\n{error_highlight}\n\n{e}");
+            }
+        };
 
 
         println!("{:?}", ast);
@@ -69,6 +85,18 @@ fn lex_error_locs(error : &LexError) -> Vec<usize> {
         LexError::NegativeNumberNeedsDigits(loc) => vec![*loc],
         LexError::Aggregate(errors) => 
             errors.into_iter().flat_map(lex_error_locs).collect(),
+    }
+}
+
+fn parse_error_locs(error : &ParseError) -> Vec<Meta> {
+    match error {
+        ParseError::UnexpectedToken(t) => {
+            let m = t.meta();
+            vec![m]
+        },
+        ParseError::UnexpectedEof => vec![],
+        ParseError::Aggregate(errors) => 
+            errors.into_iter().flat_map(parse_error_locs).collect(),
     }
 }
 
