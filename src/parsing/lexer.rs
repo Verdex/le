@@ -288,7 +288,7 @@ fn digit(input : &mut Parser<char>) -> Result<char, LexError> {
 fn whitespace(input : &mut Parser<char>) {
     loop {
         let result = input.with_rollback(|input|
-            if input.get(LexError::UnexpectedEof)?.is_whitespace() {
+            if input.get()?.is_whitespace() {
                 Ok(())
             }
             else {
