@@ -4,8 +4,8 @@ version = 4
 
 [[package]]
 name = "jlnexus"
-version = "1.0.0"
-source = "git+https://www.github.com/verdex/jlnexus?tag=release-1.0.0#158bb5fc8f0fcf991442dbede9e729e553b0013c"
+version = "2.0.0"
+source = "git+https://www.github.com/verdex/jlnexus?tag=release-2.0.0#2a8cac4887a364cbe13507b33d86fdc10ac75522"
 
 [[package]]
 name = "le"
@@ -17,8 +17,8 @@ dependencies = [
 
 [[package]]
 name = "ordan"
-version = "1.0.0"
-source = "git+https://www.github.com/verdex/ordan?tag=release-1.0.0#2ac17c28ba2ff03a01b663f8107f514f451db7c1"
+version = "1.0.1"
+source = "git+https://www.github.com/verdex/ordan?tag=release-1.0.1#fc4c95e66bb3ab13fede9df44efde4427e409d9b"
 dependencies = [
  "jlnexus",
 ]

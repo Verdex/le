@@ -76,8 +76,6 @@ fn read() -> io::Result<Rc<str>> {
 
 fn lex_error_locs(error : &LexError) -> Vec<usize> {
     match error {
-        LexError::StringEof => vec![],
-        LexError::BlockCommentEof => vec![],
         LexError::UnexpectedEof => vec![], 
         LexError::UnknownEscape(_, n) => vec![*n],
         LexError::UnexpectedChar(_, _, loc) => vec![*loc],
@@ -85,6 +83,7 @@ fn lex_error_locs(error : &LexError) -> Vec<usize> {
         LexError::NegativeNumberNeedsDigits(loc) => vec![*loc],
         LexError::Aggregate(errors) => 
             errors.into_iter().flat_map(lex_error_locs).collect(),
+        LexError::Fatal(error) => lex_error_locs(error),
     }
 }
 

@@ -1,13 +1,13 @@
 
 use std::rc::Rc;
-use jlnexus::Parser;
+use jlnexus:: { Parser, JlnError };
 use crate::data::{ Meta, Token };
 
 macro_rules! lex_char {
     ($name:ident, $target : literal) => {
         fn $name(input : &mut Parser<char>) -> Result<char, LexError> {
             let index = input.index();
-            let c = input.get(LexError::UnexpectedEof)?;
+            let c = input.get::<LexError>()?;
             if *c == $target {
                 Ok(*c)
             }
@@ -32,21 +32,34 @@ macro_rules! punct {
 
 #[derive(Debug)]
 pub enum LexError {
-    BlockCommentEof,
-    StringEof, 
     UnexpectedEof,
     UnknownEscape(char, usize),
     UnexpectedChar(Box<str>, char, usize),
     NumberWithMultipleDots(Box<str>, usize),
     NegativeNumberNeedsDigits(usize),
     Aggregate(Vec<LexError>),
+    Fatal(Box<LexError>),
+}
+
+trait Fatal {
+    fn fatal(self) -> Self;
+}
+
+impl<T> Fatal for Result<T, LexError> {
+    fn fatal(self) -> Self {
+        self.map_err(|x| LexError::Fatal(Box::new(x)))
+    }
+}
+
+impl JlnError for LexError {
+    fn is_fatal(&self) -> bool { false }
+    fn eof() -> Self { LexError::UnexpectedEof }
+    fn aggregate(errors : Vec<Self>) -> Self { LexError::Aggregate(errors) }
 }
 
 impl std::fmt::Display for LexError {
     fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            LexError::StringEof => write!(f, "end of file encountered mid string"),
-            LexError::BlockCommentEof => write!(f, "end of file encountered mid block comment"),
             LexError::UnexpectedEof => write!(f, "unexpected end of file encountered"),
             LexError::UnknownEscape(c, n) => write!(f, "unknown escape character {} found in string at {}", c, n),
             LexError::UnexpectedChar(expected, unknown, loc) => write!(f, "expected {} but found {} at {}", expected, unknown, loc),
@@ -55,13 +68,8 @@ impl std::fmt::Display for LexError {
             LexError::NegativeNumberNeedsDigits(loc) => write!(f, "a negative number needs digits at: {}", loc),
             LexError::Aggregate(errors) => write!(f, "encountered error list:\n{}", 
                 errors.into_iter().map(|x| format!("  {}\n", x)).collect::<Vec<_>>().join("")),
+            LexError::Fatal(error) => write!(f, "FATAL: {error}"),
         }
-    }
-}
-
-impl From<Vec<LexError>> for LexError {
-    fn from(item : Vec<LexError>) -> Self {
-        LexError::Aggregate(item)
     }
 }
 
@@ -210,7 +218,7 @@ fn string(input : &mut Parser<char>) -> Result<Token, LexError> {
     let mut escape = false;
     loop {
         let index = input.index();
-        match (input.get(LexError::StringEof)?, escape) {
+        match (input.get()?, escape) {
             ('"', true) => {
                 xs.push('"');
                 escape = false;
@@ -257,7 +265,7 @@ lex_char!(minus, '-');
 
 fn letter(input : &mut Parser<char>) -> Result<char, LexError> {
     let index = input.index();
-    let c = input.get(LexError::UnexpectedEof)?;
+    let c = input.get()?;
     if c.is_alphabetic() {
         Ok(*c)
     }
@@ -268,7 +276,7 @@ fn letter(input : &mut Parser<char>) -> Result<char, LexError> {
 
 fn digit(input : &mut Parser<char>) -> Result<char, LexError> {
     let index = input.index();
-    let c = input.get(LexError::UnexpectedEof)?;
+    let c = input.get()?;
     if c.is_digit(10) {
         Ok(*c)
     }
@@ -280,7 +288,7 @@ fn digit(input : &mut Parser<char>) -> Result<char, LexError> {
 fn whitespace(input : &mut Parser<char>) {
     loop {
         let result = input.with_rollback(|input|
-            if input.get(LexError::UnexpectedEof)?.is_whitespace() {
+            if input.get()?.is_whitespace() {
                 Ok(())
             }
             else {
@@ -303,7 +311,7 @@ fn line_comment(input : &mut Parser<char>) {
         slash(input)?;
 
         loop {
-            match input.get(()) {
+            match input.get::<LexError>() { 
                 Ok('\n' | '\r') => { break; },
                 Err(_) => { break; },
                 _ => { },
@@ -333,7 +341,7 @@ fn block_comment(input : &mut Parser<char>) -> Result<(), LexError> {
         let mut nest_level = 1;
 
         loop {
-            match (input.get(LexError::BlockCommentEof)?, state) {
+            match (input.get().fatal()?, state) {
                 ('*', State::StartSlash) => {  
                     state = State::Idle;
                     nest_level += 1;
@@ -361,7 +369,7 @@ fn block_comment(input : &mut Parser<char>) -> Result<(), LexError> {
 
     match result {
         Ok(_) => Ok(()),
-        Err(e @ LexError::BlockCommentEof) => Err(e),
+        Err(e) if e.is_fatal() => Err(e),
         Err(_) => Ok(()),
     }
 }
