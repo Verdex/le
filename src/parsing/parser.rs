@@ -1,19 +1,19 @@
 
 use std::error::Error;
 use std::rc::Rc;
-use jlnexus::Parser;
+use jlnexus::{ Parser, JlnError };
 use crate::data::{ Token, Ast, Slot, LeType };
 
 
 macro_rules! proj {
     ($input:ident, $target:pat, $e:expr) => {
-        match $input.get(ParseError::UnexpectedEof)? {
+        match $input.get()? {
             $target => Ok($e),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
     };
     ($input:ident, $target:pat if $p:expr, $e:expr) => {
-        match $input.get(ParseError::UnexpectedEof)? {
+        match $input.get()? {
             $target if $p => Ok($e),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
@@ -25,6 +25,12 @@ pub enum ParseError {
     UnexpectedToken(Token),
     UnexpectedEof,
     Aggregate(Vec<ParseError>),
+}
+
+impl JlnError for ParseError {
+    fn is_fatal(&self) -> bool { false }
+    fn eof() -> Self { ParseError::UnexpectedEof }
+    fn aggregate(errors : Vec<Self>) -> Self { ParseError::Aggregate(errors) }
 }
 
 impl std::fmt::Display for ParseError {
@@ -39,12 +45,6 @@ impl std::fmt::Display for ParseError {
 }
 
 impl Error for ParseError { }
-
-impl From<Vec<ParseError>> for ParseError{
-    fn from(item : Vec<ParseError>) -> Self {
-        ParseError::Aggregate(item)
-    }
-}
 
 pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
     let mut buffer : Parser<Token> = input.into(); 
@@ -65,7 +65,7 @@ pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
 
 fn type_sig(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
     fn simple(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
-        match input.get(ParseError::UnexpectedEof)? {
+        match input.get()? {
             Token::Symbol(s, _) => Ok(LeType::SimpleType(Rc::clone(s))),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
