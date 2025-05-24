@@ -200,10 +200,10 @@ fn number(input : &mut Parser<char>) -> Result<Token, LexError> {
     rest.insert(0, first);
 
     if rest.iter().filter(|x| **x == '.').count() > 1 {
-        Err(LexError::NumberWithMultipleDots(rest.into_iter().collect(), start))
+        Err(LexError::NumberWithMultipleDots(rest.into_iter().collect(), start)).fatal()
     }
     else if rest.len() == 1 && first == '-' {
-        Err(LexError::NegativeNumberNeedsDigits(start))
+        Err(LexError::NegativeNumberNeedsDigits(start)).fatal()
     }
     else {
         let n : Rc<str> = rest.into_iter().collect::<String>().into();
@@ -224,7 +224,7 @@ fn string(input : &mut Parser<char>) -> Result<Token, LexError> {
     let mut escape = false;
     loop {
         let index = input.index();
-        match (input.get()?, escape) {
+        match (input.get().fatal()?, escape) {
             ('"', true) => {
                 xs.push('"');
                 escape = false;
@@ -252,7 +252,7 @@ fn string(input : &mut Parser<char>) -> Result<Token, LexError> {
             ('\\', false) => {
                 escape = true;
             },
-            (c, true) => { return Err(LexError::UnknownEscape(*c, index)); },
+            (c, true) => { return Err(LexError::UnknownEscape(*c, index)).fatal(); },
             ('"', false) => { 
                 last = index; 
                 break; 
