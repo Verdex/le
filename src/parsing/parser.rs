@@ -47,7 +47,7 @@ impl From<Vec<ParseError>> for ParseError{
 }
 
 pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
-    let mut buffer = Parser::new(&input);
+    let mut buffer : Parser<Token> = input.into(); 
     let mut top_level = vec![];
 
     while !buffer.end() {
