@@ -83,6 +83,7 @@ fn lex_error_locs(error : &LexError) -> Vec<usize> {
         LexError::NegativeNumberNeedsDigits(loc) => vec![*loc],
         LexError::Aggregate(errors) => 
             errors.into_iter().flat_map(lex_error_locs).collect(),
+        LexError::Fatal(error) => lex_error_locs(error),
     }
 }
 

@@ -38,6 +38,17 @@ pub enum LexError {
     NumberWithMultipleDots(Box<str>, usize),
     NegativeNumberNeedsDigits(usize),
     Aggregate(Vec<LexError>),
+    Fatal(Box<LexError>),
+}
+
+trait Fatal {
+    fn fatal(self) -> Self;
+}
+
+impl<T> Fatal for Result<T, LexError> {
+    fn fatal(self) -> Self {
+        self.map_err(|x| LexError::Fatal(Box::new(x)))
+    }
 }
 
 impl JlnError for LexError {
@@ -57,6 +68,7 @@ impl std::fmt::Display for LexError {
             LexError::NegativeNumberNeedsDigits(loc) => write!(f, "a negative number needs digits at: {}", loc),
             LexError::Aggregate(errors) => write!(f, "encountered error list:\n{}", 
                 errors.into_iter().map(|x| format!("  {}\n", x)).collect::<Vec<_>>().join("")),
+            LexError::Fatal(error) => write!(f, "FATAL: {error}"),
         }
     }
 }
@@ -329,7 +341,7 @@ fn block_comment(input : &mut Parser<char>) -> Result<(), LexError> {
         let mut nest_level = 1;
 
         loop {
-            match (input.get()?, state) {
+            match (input.get().fatal()?, state) {
                 ('*', State::StartSlash) => {  
                     state = State::Idle;
                     nest_level += 1;
@@ -357,7 +369,7 @@ fn block_comment(input : &mut Parser<char>) -> Result<(), LexError> {
 
     match result {
         Ok(_) => Ok(()),
-        Err(e @ LexError::UnexpectedEof) => Err(e),
+        Err(e) if e.is_fatal() => Err(e),
         Err(_) => Ok(()),
     }
 }
