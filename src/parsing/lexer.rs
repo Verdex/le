@@ -52,7 +52,13 @@ impl<T> Fatal for Result<T, LexError> {
 }
 
 impl JlnError for LexError {
-    fn is_fatal(&self) -> bool { false }
+    fn is_fatal(&self) -> bool { 
+        match self {
+            LexError::Fatal(_) => true,
+            LexError::Aggregate(errors) => errors.iter().any(|error| error.is_fatal()),
+            _ => false,
+        }
+    }
     fn eof() -> Self { LexError::UnexpectedEof }
     fn aggregate(errors : Vec<Self>) -> Self { LexError::Aggregate(errors) }
 }
