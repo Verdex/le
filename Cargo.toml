@@ -6,5 +6,5 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-jlnexus = { git = "https://www.github.com/verdex/jlnexus", version = "1.0.0", tag = "release-1.0.0" }
+jlnexus = { git = "https://www.github.com/verdex/jlnexus", version = "2.0.0", tag = "release-2.0.0" }
 ordan = { git = "https://www.github.com/verdex/ordan", version = "1.0.0", tag = "release-1.0.0" }
