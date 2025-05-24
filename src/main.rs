@@ -41,11 +41,11 @@ pub fn main() {
             }
         };
 
-        // TODO
-        let _ = tokens.iter().map(|x| x.meta()).collect::<Vec<_>>();
-
         let ast = match parser::parse(tokens) {
             Ok(ast) => ast,
+            // TODO if you hit an unexpected end of file then you
+            // can wait for more input, try again, etc
+            //Err(ParseError::UnexpectedEof) => { },
             Err(e) => {
                 let mut error_highlights = parse_error_locs(&e)
                     .into_iter()
