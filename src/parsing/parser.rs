@@ -91,12 +91,12 @@ fn type_sig(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
     fn index_end(input : &mut Parser<Token>) -> Result<Vec<LeType>, ParseError> {
         input.with_rollback(|input| {
             proj!(input, Token::LAngle(_), ())?;
-            let first = type_sig(input)?;
+            let first = type_sig(input).fatal()?;
             let mut rest = input.list(|input| {
                 proj!(input, Token::Comma(_), ())?;
-                type_sig(input)
+                type_sig(input).fatal()
             })?;
-            proj!(input, Token::RAngle(_), ())?;
+            proj!(input, Token::RAngle(_), ()).fatal()?;
             rest.insert(0, first);
             Ok(rest)
         })
@@ -118,25 +118,25 @@ fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     }
 
     proj!(input, Token::Symbol(n, _) if **n == *"fun", ())?;
-    let name = proj!(input, Token::Symbol(n, _), Rc::clone(n))?;
-    proj!(input, Token::LParen(_), ())?;
+    let name = proj!(input, Token::Symbol(n, _), Rc::clone(n)).fatal()?;
+    proj!(input, Token::LParen(_), ()).fatal()?;
     let params = match input.option(|input| param(input))? {
         Some(first) => {
             let mut rest = input.list(|input| {
                 proj!(input, Token::Comma(_), ())?;
-                param(input)
+                param(input).fatal()
             })?;
             rest.insert(0, first);
             rest
         },
         None => vec![],
     };
-    proj!(input, Token::RParen(_), ())?;
-    proj!(input, Token::RArrow(_), ())?;
-    let t = type_sig(input)?;
-    proj!(input, Token::LCurl(_), ())?;
-    let e = expr(input)?;
-    proj!(input, Token::RCurl(_), ())?;
+    proj!(input, Token::RParen(_), ()).fatal()?;
+    proj!(input, Token::RArrow(_), ()).fatal()?;
+    let t = type_sig(input).fatal()?;
+    proj!(input, Token::LCurl(_), ()).fatal()?;
+    let e = expr(input).fatal()?;
+    proj!(input, Token::RCurl(_), ()).fatal()?;
 
     Ok(Ast::Fun { 
         name: name, 
@@ -159,14 +159,14 @@ fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
             Some(first) => {
                 let mut rest = input.list(|input| {
                     proj!(input, Token::Comma(_), ())?;
-                    expr(input)
+                    expr(input).fatal()
                 })?;
                 rest.insert(0, first);
                 rest
             },
             None => vec![],
         };
-        proj!(input, Token::RParen(_), ())?;
+        proj!(input, Token::RParen(_), ()).fatal()?;
         Ok(Box::new(move |x| Ast::Call { fun_expr: Box::new(x), args: params }))
     }
     
