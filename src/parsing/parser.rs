@@ -39,7 +39,13 @@ impl<T> Fatal for Result<T, ParseError> {
 }
 
 impl JlnError for ParseError {
-    fn is_fatal(&self) -> bool { false }
+    fn is_fatal(&self) -> bool {
+        match self {
+            ParseError::Fatal(_) => true,
+            ParseError::Aggregate(errors) => errors.iter().any(|error| error.is_fatal()),
+            _ => false,
+        }
+    }
     fn eof() -> Self { ParseError::UnexpectedEof }
     fn aggregate(errors : Vec<Self>) -> Self { ParseError::Aggregate(errors) }
 }
