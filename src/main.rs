@@ -96,6 +96,7 @@ fn parse_error_locs(error : &ParseError) -> Vec<Meta> {
         ParseError::UnexpectedEof => vec![],
         ParseError::Aggregate(errors) => 
             errors.into_iter().flat_map(parse_error_locs).collect(),
+        ParseError::Fatal(error) => parse_error_locs(error),
     }
 }
 

@@ -25,6 +25,17 @@ pub enum ParseError {
     UnexpectedToken(Token),
     UnexpectedEof,
     Aggregate(Vec<ParseError>),
+    Fatal(Box<ParseError>)
+}
+
+trait Fatal {
+    fn fatal(self) -> Self;
+}
+
+impl<T> Fatal for Result<T, ParseError> {
+    fn fatal(self) -> Self {
+        self.map_err(|x| ParseError::Fatal(Box::new(x)))
+    }
 }
 
 impl JlnError for ParseError {
@@ -40,6 +51,7 @@ impl std::fmt::Display for ParseError {
             ParseError::UnexpectedEof => write!(f, "encountered unexpected eof"),
             ParseError::Aggregate(errors) => write!(f, "encountered error list:\n{}", 
                 errors.into_iter().map(|x| format!("  {}\n", x)).collect::<Vec<_>>().join("")),
+            ParseError::Fatal(error) => write!(f, "FATAL: {error}"),
         }
     }
 }
