@@ -79,6 +79,7 @@ pub struct Slot {
 
 #[derive(Debug)]
 pub enum Ast {
+    LeString(Rc<str>),
     Number(Rc<str>), 
     Var(Rc<str>),
     Call { 

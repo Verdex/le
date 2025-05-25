@@ -153,6 +153,9 @@ fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     fn symbol(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         proj!(input, Token::Symbol(s, _), Ast::Var(Rc::clone(s)))
     }
+    fn string(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
+        proj!(input, Token::String(s, _), Ast::LeString(Rc::clone(s)))
+    }
     fn call(input : &mut Parser<Token>) -> Result<Box<dyn FnOnce(Ast) -> Ast>, ParseError> {
         proj!(input, Token::LParen(_), ())?;
         let params = match input.option(|input| expr(input))? {
@@ -170,7 +173,12 @@ fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
         Ok(Box::new(move |x| Ast::Call { fun_expr: Box::new(x), args: params }))
     }
     
-    let mut e = input.or([number, symbol])?;
+    let mut e = input.or(
+        [
+            symbol,
+            number, 
+            string,
+        ])?;
 
     loop {
         match input.or([call]) {
