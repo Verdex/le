@@ -3,6 +3,11 @@
 version = 4
 
 [[package]]
+name = "an_a_vm"
+version = "1.0.0"
+source = "git+https://www.github.com/verdex/an_a_vm?tag=release-1.0.0#c44b67339c8d223cd87c248a74442f530d75cea7"
+
+[[package]]
 name = "jlnexus"
 version = "2.0.0"
 source = "git+https://www.github.com/verdex/jlnexus?tag=release-2.0.0#2a8cac4887a364cbe13507b33d86fdc10ac75522"
@@ -11,6 +16,7 @@ source = "git+https://www.github.com/verdex/jlnexus?tag=release-2.0.0#2a8cac4887
 name = "le"
 version = "0.1.0"
 dependencies = [
+ "an_a_vm",
  "jlnexus",
  "ordan",
 ]
