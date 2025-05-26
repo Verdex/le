@@ -7,6 +7,8 @@ use crate::data::{ Token, Ast, Slot, LeType };
 
 macro_rules! proj {
     ($input:ident, $target:pat, $e:expr) => {
+        // Note:  There aren't any AST structures that have the form of "continue parsing until eof".
+        // So $input.get().fatal()? should always be the correct thing to do.
         match $input.get().fatal()? {
             $target => Ok($e),
             t => Err(ParseError::UnexpectedToken(t.clone())),
