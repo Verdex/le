@@ -14,7 +14,14 @@ pub fn main() {
     let mut prev_line = String::new();
 
     loop {
-        print!("> ");
+
+        if prev_line.is_empty() {
+            print!("> ");
+        }
+        else {
+            print!("| ");
+        }
+
 
         match io::stdout().flush() {
             Err(e) => panic!("encountered io error: {e}"),
