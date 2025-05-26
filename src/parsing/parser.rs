@@ -7,13 +7,13 @@ use crate::data::{ Token, Ast, Slot, LeType };
 
 macro_rules! proj {
     ($input:ident, $target:pat, $e:expr) => {
-        match $input.get()? {
+        match $input.get().fatal()? {
             $target => Ok($e),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
     };
     ($input:ident, $target:pat if $p:expr, $e:expr) => {
-        match $input.get()? {
+        match $input.get().fatal()? {
             $target if $p => Ok($e),
             t => Err(ParseError::UnexpectedToken(t.clone())),
         }
