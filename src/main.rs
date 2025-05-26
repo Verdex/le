@@ -10,6 +10,9 @@ use crate::parsing::parser::{self, ParseError};
 use crate::data::{Meta};
 
 pub fn main() {
+
+    let mut prev_line = String::new();
+
     loop {
         print!("> ");
 
@@ -18,14 +21,22 @@ pub fn main() {
             _ => { },
         }
 
-        let input = match read() {
+        let input = match read(prev_line) {
             Ok(input) => input,
             Err(e) => panic!("encountered io error: {e}"),
         };
 
         let tokens = match lexer::lex(Rc::clone(&input)) {
             Ok(tokens) => tokens,
+
             Err(e) => {
+
+                if lex_has_eof(&e) {
+                    prev_line = input.to_string();
+                    continue;
+                }
+
+                prev_line = String::new();
 
                 let mut error_highlights = lex_error_locs(&e)
                     .into_iter()
@@ -44,6 +55,14 @@ pub fn main() {
         let ast = match parser::parse(tokens) {
             Ok(ast) => ast,
             Err(e) => {
+
+                if parse_has_eof(&e) {
+                    prev_line = input.to_string();
+                    continue;
+                }
+
+                prev_line = String::new();
+
                 let mut error_highlights = parse_error_locs(&e)
                     .into_iter()
                     .map(|x| report_error(Rc::clone(&input), x.start, x.end))
@@ -58,6 +77,7 @@ pub fn main() {
             }
         };
 
+        prev_line = String::new();
 
         println!("{:?}", ast);
 
@@ -65,10 +85,29 @@ pub fn main() {
     }
 }
 
-fn read() -> io::Result<Rc<str>> {
+fn read(mut prev : String) -> io::Result<Rc<str>> {
     let mut s = String::new();
     io::stdin().read_line(&mut s)?;
-    Ok(s.into())
+    prev.push_str(&s);
+    Ok(prev.into())
+}
+
+fn lex_has_eof(e : &LexError) -> bool {
+    match e {
+        LexError::UnexpectedEof => true,
+        LexError::Fatal(e) => lex_has_eof(e),
+        LexError::Aggregate(es) => es.iter().any(lex_has_eof),
+        _ => false,
+    }
+}
+
+fn parse_has_eof(e : &ParseError) -> bool {
+    match e {
+        ParseError::UnexpectedEof => true,
+        ParseError::Fatal(e) => parse_has_eof(e),
+        ParseError::Aggregate(es) => es.iter().any(parse_has_eof),
+        _ => false,
+    }
 }
 
 fn lex_error_locs(error : &LexError) -> Vec<usize> {
