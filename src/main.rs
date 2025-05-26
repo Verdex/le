@@ -55,7 +55,8 @@ pub fn main() {
                 
                 let error_highlight = error_highlights.join("\n");
 
-                panic!("encountered lexing error:\n{error_highlight}\n\n{e}");
+                println!("encountered lexing error:\n{error_highlight}\n\n{e}");
+                continue;
             }
         };
 
@@ -80,7 +81,8 @@ pub fn main() {
                 
                 let error_highlight = error_highlights.join("\n");
 
-                panic!("encountered parsing error:\n{error_highlight}\n\n{e}");
+                println!("encountered parsing error:\n{error_highlight}\n\n{e}");
+                continue;
             }
         };
 
