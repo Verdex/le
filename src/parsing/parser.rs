@@ -112,8 +112,8 @@ fn type_sig(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
 fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     fn param(input : &mut Parser<Token>) -> Result<Slot, ParseError> {
         let n = proj!(input, Token::Symbol(n, _), Rc::clone(n))?;
-        proj!(input, Token::Colon(_), ())?;
-        let t = type_sig(input)?;
+        proj!(input, Token::Colon(_), ()).fatal()?;
+        let t = type_sig(input).fatal()?;
         Ok(Slot { name: n, ttype: t })
     }
 
