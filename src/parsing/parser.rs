@@ -2,7 +2,8 @@
 use std::error::Error;
 use std::rc::Rc;
 use jlnexus::{ Parser, JlnError };
-use crate::data::{ Token, Ast, Slot, LeType };
+use crate::data::Token;
+use crate::data::ast::*;
 
 
 macro_rules! proj {
@@ -66,21 +67,20 @@ impl std::fmt::Display for ParseError {
 
 impl Error for ParseError { }
 
-pub fn parse(input : Vec<Token>) -> Result<Vec<Ast>, ParseError> {
+pub fn parse_defines(input : Vec<Token>) -> Result<Vec<Define>, ParseError> {
     let mut buffer : Parser<Token> = input.into(); 
-    let mut top_level = vec![];
+    let mut defines = vec![];
 
     while !buffer.end() {
 
         let item = buffer.or(
             [
                 fun,
-                expr
             ])?;
-        top_level.push(item);
+        defines.push(item);
     }
 
-    Ok(top_level)
+    Ok(defines)
 }
 
 fn type_sig(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
@@ -111,7 +111,7 @@ fn type_sig(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
     }
 }
 
-fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
+fn fun(input : &mut Parser<Token>) -> Result<Define, ParseError> {
     fn param(input : &mut Parser<Token>) -> Result<Slot, ParseError> {
         let n = proj!(input, Token::Symbol(n, _), Rc::clone(n))?;
         proj!(input, Token::Colon(_), ()).fatal()?;
@@ -140,25 +140,25 @@ fn fun(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
     let e = expr(input).fatal()?;
     proj!(input, Token::RCurl(_), ()).fatal()?;
 
-    Ok(Ast::Fun { 
+    Ok(Define::Fun { 
         name: name, 
         params: params,
         return_type: t,
-        body: Box::new(e),
+        body: e,
     })
 }
 
-fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-    fn number(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-        proj!(input, Token::Number(n, _), Ast::Number(Rc::clone(n)))
+fn expr(input : &mut Parser<Token>) -> Result<Expr, ParseError> {
+    fn number(input : &mut Parser<Token>) -> Result<Expr, ParseError> {
+        proj!(input, Token::Number(n, _), Expr::Number(Rc::clone(n)))
     }
-    fn symbol(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-        proj!(input, Token::Symbol(s, _), Ast::Var(Rc::clone(s)))
+    fn symbol(input : &mut Parser<Token>) -> Result<Expr, ParseError> {
+        proj!(input, Token::Symbol(s, _), Expr::Var(Rc::clone(s)))
     }
-    fn string(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
-        proj!(input, Token::String(s, _), Ast::LeString(Rc::clone(s)))
+    fn string(input : &mut Parser<Token>) -> Result<Expr, ParseError> {
+        proj!(input, Token::String(s, _), Expr::LeString(Rc::clone(s)))
     }
-    fn call(input : &mut Parser<Token>) -> Result<Box<dyn FnOnce(Ast) -> Ast>, ParseError> {
+    fn call(input : &mut Parser<Token>) -> Result<Box<dyn FnOnce(Expr) -> Expr>, ParseError> {
         proj!(input, Token::LParen(_), ())?;
         let params = match input.option(|input| expr(input))? {
             Some(first) => {
@@ -172,7 +172,7 @@ fn expr(input : &mut Parser<Token>) -> Result<Ast, ParseError> {
             None => vec![],
         };
         proj!(input, Token::RParen(_), ()).fatal()?;
-        Ok(Box::new(move |x| Ast::Call { fun_expr: Box::new(x), args: params }))
+        Ok(Box::new(move |x| Expr::Call { fun_expr: Box::new(x), args: params }))
     }
     
     let mut e = input.or(

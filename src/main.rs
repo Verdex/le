@@ -61,7 +61,7 @@ pub fn main() {
             }
         };
 
-        let ast = match parser::parse(tokens) {
+        let defines = match parser::parse_defines(tokens) {
             Ok(ast) => ast,
             Err(e) => {
 
@@ -89,7 +89,7 @@ pub fn main() {
 
         prev_line = String::new();
 
-        println!("{:?}", ast);
+        println!("{:?}", defines);
 
 
     }

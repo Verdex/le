@@ -65,7 +65,9 @@ impl Token {
     }
 }
 
-pub mod Ast {
+pub mod ast {
+    use std::rc::Rc;
+
     #[derive(Debug)]
     pub enum LeType {
         SimpleType(Rc<str>),
@@ -95,7 +97,7 @@ pub mod Ast {
             name : Rc<str>,
             params : Vec<Slot>,
             return_type : LeType,
-            body : Box<Ast>,
+            body : Expr,
         },
     }
 }
