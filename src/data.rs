@@ -92,7 +92,7 @@ pub mod ast {
     }
 
     #[derive(Debug)]
-    pub enum Define {
+    pub enum Def {
         Fun {
             name : Rc<str>,
             params : Vec<Slot>,

@@ -67,7 +67,7 @@ impl std::fmt::Display for ParseError {
 
 impl Error for ParseError { }
 
-pub fn parse_defines(input : Vec<Token>) -> Result<Vec<Define>, ParseError> {
+pub fn parse_defines(input : Vec<Token>) -> Result<Vec<Def>, ParseError> {
     let mut buffer : Parser<Token> = input.into(); 
     let mut defines = vec![];
 
@@ -111,7 +111,7 @@ fn type_sig(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
     }
 }
 
-fn fun(input : &mut Parser<Token>) -> Result<Define, ParseError> {
+fn fun(input : &mut Parser<Token>) -> Result<Def, ParseError> {
     fn param(input : &mut Parser<Token>) -> Result<Slot, ParseError> {
         let n = proj!(input, Token::Symbol(n, _), Rc::clone(n))?;
         proj!(input, Token::Colon(_), ()).fatal()?;
@@ -140,7 +140,7 @@ fn fun(input : &mut Parser<Token>) -> Result<Define, ParseError> {
     let e = expr(input).fatal()?;
     proj!(input, Token::RCurl(_), ()).fatal()?;
 
-    Ok(Define::Fun { 
+    Ok(Def::Fun { 
         name: name, 
         params: params,
         return_type: t,
