@@ -65,31 +65,37 @@ impl Token {
     }
 }
 
-#[derive(Debug)]
-pub enum LeType {
-    SimpleType(Rc<str>),
-    IndexType { name : Rc<str>, params : Vec<LeType> },
-}
+pub mod Ast {
+    #[derive(Debug)]
+    pub enum LeType {
+        SimpleType(Rc<str>),
+        IndexType { name : Rc<str>, params : Vec<LeType> },
+    }
 
-#[derive(Debug)]
-pub struct Slot {
-    pub name : Rc<str>,
-    pub ttype : LeType,
-}
+    #[derive(Debug)]
+    pub struct Slot {
+        pub name : Rc<str>,
+        pub ttype : LeType,
+    }
 
-#[derive(Debug)]
-pub enum Ast {
-    LeString(Rc<str>),
-    Number(Rc<str>), 
-    Var(Rc<str>),
-    Call { 
-        fun_expr : Box<Ast>,
-        args : Vec<Ast>,
-    },
-    Fun {
-        name : Rc<str>,
-        params : Vec<Slot>,
-        return_type : LeType,
-        body : Box<Ast>,
-    },
+    #[derive(Debug)]
+    pub enum Expr {
+        LeString(Rc<str>),
+        Number(Rc<str>), 
+        Var(Rc<str>),
+        Call { 
+            fun_expr : Box<Expr>,
+            args : Vec<Expr>,
+        },
+    }
+
+    #[derive(Debug)]
+    pub enum Define {
+        Fun {
+            name : Rc<str>,
+            params : Vec<Slot>,
+            return_type : LeType,
+            body : Box<Ast>,
+        },
+    }
 }
