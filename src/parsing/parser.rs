@@ -216,6 +216,7 @@ fn expr(input : &mut Parser<Token>) -> Result<Expr, ParseError> {
 }
 
 #[cfg(test)] 
+#[allow(unreachable_patterns)]
 mod test {
     use super::*;
     use super::super::lexer;
