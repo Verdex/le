@@ -217,8 +217,6 @@ fn expr(input : &mut Parser<Token>) -> Result<Expr, ParseError> {
 
 #[cfg(test)] 
 mod test {
-    use ordan::*;
-
     use super::*;
     use super::super::lexer;
 

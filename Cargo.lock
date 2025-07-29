@@ -18,13 +18,4 @@ version = "0.1.0"
 dependencies = [
  "an_a_vm",
  "jlnexus",
- "ordan",
-]
-
-[[package]]
-name = "ordan"
-version = "1.0.1"
-source = "git+https://www.github.com/verdex/ordan?tag=release-1.0.1#fc4c95e66bb3ab13fede9df44efde4427e409d9b"
-dependencies = [
- "jlnexus",
 ]
