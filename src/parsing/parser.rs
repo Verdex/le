@@ -83,6 +83,27 @@ pub fn parse_defines(input : Vec<Token>) -> Result<Vec<Def>, ParseError> {
     Ok(defines)
 }
 
+pub fn parse_define_or_expr(input : Vec<Token>) -> Result<Vec<DefOrExpr>, ParseError> {
+
+    fn x_fun(input : &mut Parser<Token>) -> Result<DefOrExpr, ParseError> { Ok(DefOrExpr::Def(fun(input)?)) }
+    fn x_expr(input : &mut Parser<Token>) -> Result<DefOrExpr, ParseError> { Ok(DefOrExpr::Expr(expr(input)?)) }
+    
+    let mut buffer : Parser<Token> = input.into(); 
+    let mut xs = vec![];
+
+    while !buffer.end() {
+
+        let item = buffer.or(
+            [
+                x_fun,
+                x_expr
+            ])?;
+        xs.push(item);
+    }
+
+    Ok(xs)
+}
+
 fn type_sig(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
     fn simple(input : &mut Parser<Token>) -> Result<LeType, ParseError> {
         match input.get()? {

@@ -100,4 +100,10 @@ pub mod ast {
             body : Expr,
         },
     }
+
+    #[derive(Debug)]
+    pub enum DefOrExpr {
+        Def(Def),
+        Expr(Expr),
+    }
 }
