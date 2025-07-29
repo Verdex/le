@@ -349,20 +349,18 @@ mod test {
 
         let output = output.remove(0);
 
-        let mut results = s_pattern!(output => 
-            [DefOrExpr::Expr(expr)] expr;
-            [Expr::Call { fun_expr, args }] fun_expr;
-            [Expr::Call { fun_expr: inner, args: inner_args }] inner; 
-            [Expr::Var(x)] 
-            => (args, inner_args, x)).collect::<Vec<_>>();
-        
-        assert_eq!(results.len(), 1);
+        if let DefOrExpr::Expr(expr) = output 
+            && let Expr::Call { fun_expr, args } = expr
+            && let Expr::Call { fun_expr: inner, args: inner_args } = *fun_expr
+            && let Expr::Var(name) = *inner {
 
-        let (inputs, inner_inputs, name) = results.remove(0);
-
-        assert_eq!(*name, "blah".into());
-        assert_eq!(inputs.len(), 0);
-        assert_eq!(inner_inputs.len(), 3);
+            assert_eq!(name, "blah".into());
+            assert_eq!(args.len(), 0);
+            assert_eq!(inner_args.len(), 3);
+        }
+        else {
+            assert!(false);
+        }
     }
 
     #[test]
@@ -422,20 +420,18 @@ mod test {
 
         let output = output.remove(0);
 
-        let mut results = s_pattern!(output => 
-            [DefOrExpr::Expr(expr)] expr;
-            [Expr::Call { fun_expr, args } ] fun_expr; 
-            [Expr::Call { fun_expr: inner_expr, args: inner_args }] inner_expr; 
-            [Expr::Var(name)]
-            => (args, inner_args, name)).collect::<Vec<_>>();
-        
-        assert_eq!(results.len(), 1);
+        if let DefOrExpr::Expr(expr) = output 
+            && let Expr::Call { fun_expr, args } = expr
+            && let Expr::Call { fun_expr: inner, args: inner_args } = *fun_expr
+            && let Expr::Var(name) = *inner {
 
-        let (inputs, inner_input, name) = results.remove(0);
-
-        assert_eq!(*name, "blah".into());
-        assert_eq!(inputs.len(), 0);
-        assert_eq!(inner_input.len(), 0);
+            assert_eq!(name, "blah".into());
+            assert_eq!(args.len(), 0);
+            assert_eq!(inner_args.len(), 0);
+        }
+        else {
+            assert!(false);
+        }
     }
 
     #[test]
