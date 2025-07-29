@@ -238,19 +238,19 @@ mod test {
     fn should_parse_fun_with_complex_index_type() {
         let s = "fun name() -> T3<T1<T4>, T2, T5> { z }";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_defines(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
 
         let (name, params, body, return_type) = proj!(output, 
-            Ast::Fun { name, params, body, return_type }, 
-            (name, params, *body, return_type));
+            Def::Fun { name, params, body, return_type }, 
+            (name, params, body, return_type));
 
         assert_eq!(name, "name".into());
         assert_eq!(params.len(), 0);
         
-        let var_name = proj!(body, Ast::Var(x), x);
+        let var_name = proj!(body, Expr::Var(x), x);
         assert_eq!(var_name, "z".into());
 
         let (index_name, mut index_params) = proj!(return_type, LeType::IndexType { name, params }, (name, params));
@@ -274,12 +274,12 @@ mod test {
     fn should_parse_fun_with_index_type() {
         let s = "fun name() -> T3<T1> { z }";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_defines(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
 
-        let return_type = proj!(output, Ast::Fun { return_type, .. }, return_type);
+        let return_type = proj!(output, Def::Fun { return_type, .. }, return_type);
 
         let (name, params) = proj!(return_type, LeType::IndexType { name, params}, (name, params));
 
@@ -291,12 +291,12 @@ mod test {
     fn should_parse_zero_param_fun() {
         let s = "fun name() -> T3 { z }";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_defines(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
 
-        let params = proj!(output, Ast::Fun { params, .. }, params);
+        let params = proj!(output, Def::Fun { params, .. }, params);
         assert_eq!(params.len(), 0);
     }
 
@@ -304,12 +304,12 @@ mod test {
     fn should_parse_single_param_fun() {
         let s = "fun name(x : T) -> T3 { x }";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_defines(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
 
-        let params = proj!(output, Ast::Fun { params, .. }, params);
+        let params = proj!(output, Def::Fun { params, .. }, params);
         assert_eq!(params.len(), 1);
     }
     
@@ -317,12 +317,12 @@ mod test {
     fn should_parse_fun() {
         let s = "fun name(x : T1, y : T2) -> T3 { x }";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_defines(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
 
-        let params = proj!(output, Ast::Fun { params, .. }, params);
+        let params = proj!(output, Def::Fun { params, .. }, params);
         assert_eq!(params.len(), 2);
     }
 
@@ -330,12 +330,12 @@ mod test {
     fn should_parse_variable() {
         let s = "var";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_define_or_expr(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
 
-        let name = proj!(output, Ast::Var(x), x);
+        let name = proj!(output, DefOrExpr::Expr(Expr::Var(x)), x);
 
         assert_eq!(name, "var".into());
     }
@@ -344,15 +344,16 @@ mod test {
     fn should_parse_fun_call_with_complex_param() {
         let s = "blah(ah(b()), c, d()(e, i))()";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_define_or_expr(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
 
         let mut results = s_pattern!(output => 
-            [Ast::Call { fun_expr, args }] fun_expr;
-            [Ast::Call { fun_expr: inner, args: inner_args }] inner; 
-            [Ast::Var(x)] 
+            [DefOrExpr::Expr(expr)] expr;
+            [Expr::Call { fun_expr, args }] fun_expr;
+            [Expr::Call { fun_expr: inner, args: inner_args }] inner; 
+            [Expr::Var(x)] 
             => (args, inner_args, x)).collect::<Vec<_>>();
         
         assert_eq!(results.len(), 1);
@@ -368,25 +369,25 @@ mod test {
     fn should_parse_fun_call_with_multiple_param() {
         let s = "blah(val, two, other)";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_define_or_expr(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
 
-        let (fun_expr, mut args) = proj!(output, Ast::Call { fun_expr, args }, (*fun_expr, args));
+        let (fun_expr, mut args) = proj!(output, DefOrExpr::Expr(Expr::Call { fun_expr, args }), (*fun_expr, args));
 
-        let name = proj!(fun_expr, Ast::Var(x), x);
+        let name = proj!(fun_expr, Expr::Var(x), x);
         assert_eq!(name, "blah".into());
 
         assert_eq!(args.len(), 3);
 
-        let name = proj!(args.remove(0), Ast::Var(x), x);
+        let name = proj!(args.remove(0), Expr::Var(x), x);
         assert_eq!(name, "val".into());
 
-        let name = proj!(args.remove(0), Ast::Var(x), x);
+        let name = proj!(args.remove(0), Expr::Var(x), x);
         assert_eq!(name, "two".into());
 
-        let name = proj!(args.remove(0), Ast::Var(x), x);
+        let name = proj!(args.remove(0), Expr::Var(x), x);
         assert_eq!(name, "other".into());
     }
 
@@ -394,21 +395,21 @@ mod test {
     fn should_parse_fun_call_with_param() {
         let s = "blah(val)";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_define_or_expr(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
 
-        let (fun_expr, mut args) = proj!(output, Ast::Call{fun_expr, args}, (*fun_expr, args));
+        let (fun_expr, mut args) = proj!(output, DefOrExpr::Expr(Expr::Call{fun_expr, args}), (*fun_expr, args));
 
-        let name = proj!(fun_expr, Ast::Var(x), x);
+        let name = proj!(fun_expr, Expr::Var(x), x);
         assert_eq!(name, "blah".into());
 
         assert_eq!(args.len(), 1);
 
         let arg = args.remove(0);
 
-        let name = proj!(arg, Ast::Var(x), x);
+        let name = proj!(arg, Expr::Var(x), x);
         assert_eq!(name, "val".into());
     }
 
@@ -416,15 +417,16 @@ mod test {
     fn should_parse_fun_call_call() {
         let s = "blah()()";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_define_or_expr(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
 
         let mut results = s_pattern!(output => 
-            [Ast::Call { fun_expr, args } ] fun_expr; 
-            [Ast::Call { fun_expr: inner_expr, args: inner_args }] inner_expr; 
-            [Ast::Var(name)]
+            [DefOrExpr::Expr(expr)] expr;
+            [Expr::Call { fun_expr, args } ] fun_expr; 
+            [Expr::Call { fun_expr: inner_expr, args: inner_args }] inner_expr; 
+            [Expr::Var(name)]
             => (args, inner_args, name)).collect::<Vec<_>>();
         
         assert_eq!(results.len(), 1);
@@ -440,15 +442,15 @@ mod test {
     fn should_parse_fun_call() {
         let s = "blah()";
         let input = lexer::lex(s.into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_define_or_expr(input).unwrap();
         assert_eq!(output.len(), 1);
 
         let output = output.remove(0);
-        let (fun_expr, inputs) = proj!(output, Ast::Call { fun_expr, args}, (*fun_expr, args));
+        let (fun_expr, inputs) = proj!(output, DefOrExpr::Expr(Expr::Call { fun_expr, args}), (*fun_expr, args));
 
         assert_eq!(inputs.len(), 0);
 
-        let var = proj!(fun_expr, Ast::Var(x), x);
+        let var = proj!(fun_expr, Expr::Var(x), x);
 
         assert_eq!(var, "blah".into());
     }
@@ -456,10 +458,10 @@ mod test {
     #[test]
     fn should_parse_number() {
         let input = lexer::lex("100".into()).unwrap();
-        let mut output = parse(input).unwrap();
+        let mut output = parse_define_or_expr(input).unwrap();
         assert_eq!(output.len(), 1);
 
-        let output = proj!(output.remove(0), Ast::Number(v), v);
+        let output = proj!(output.remove(0), DefOrExpr::Expr(Expr::Number(v)), v);
         assert_eq!(output, "100".into());
     }
 }
