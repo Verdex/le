@@ -61,8 +61,8 @@ pub fn main() {
             }
         };
 
-        let defines = match parser::parse_defines(tokens) {
-            Ok(ast) => ast,
+        let def_or_exprs = match parser::parse_define_or_expr(tokens) {
+            Ok(x) => x,
             Err(e) => {
 
                 if parse_has_eof(&e) {
@@ -89,7 +89,7 @@ pub fn main() {
 
         prev_line = String::new();
 
-        println!("{:?}", defines);
+        println!("{:?}", def_or_exprs);
 
 
     }
