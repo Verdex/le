@@ -4,8 +4,8 @@ version = 4
 
 [[package]]
 name = "an_a_vm"
-version = "1.0.0"
-source = "git+https://www.github.com/verdex/an_a_vm?tag=release-1.0.0#c44b67339c8d223cd87c248a74442f530d75cea7"
+version = "2.0.0"
+source = "git+https://www.github.com/verdex/an_a_vm?tag=release-2.0.0#1a28fbe4a3a4249814fc0e4049c81d0739a68c7d"
 
 [[package]]
 name = "jlnexus"
