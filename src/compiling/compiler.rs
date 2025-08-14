@@ -2,15 +2,13 @@
 use an_a_vm::data::{ Fun, Op };
 
 use crate::data::ast::*;
+use crate::data::runtime::*;
 
 
-pub fn compile(input : Vec<Def>) -> Vec<Fun<usize>> {
+pub fn compile(input : Vec<Def>) -> Vec<Fun<Local>> {
     todo!()
 }
 
-fn blarg(input : Def) -> Fun<usize> {
-    todo!()
-}
 /*
 ast fun
 name : Rc<str>,
