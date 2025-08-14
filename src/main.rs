@@ -7,9 +7,13 @@ mod runtime;
 use std::rc::Rc;
 use std::io::{self, Write};
 
+use an_a_vm::Vm;
+
 use crate::parsing::lexer::{self, LexError};
 use crate::parsing::parser::{self, ParseError};
 use crate::data::parsing::{Meta};
+use crate::data::ast::*;
+use crate::compiling::compiler;
 
 pub fn main() {
 
@@ -92,8 +96,19 @@ pub fn main() {
 
         println!("{:?}", def_or_exprs);
 
+        let gs = runtime::gen_op_list();
+        let fs = compiler::compile(blarg(def_or_exprs));
+
+        let mut vm = Vm::new(fs, gs);
+
+        let output = vm.run(0);
 
     }
+}
+
+fn blarg(x : Vec<DefOrExpr>) -> Vec<Def> {
+    // TODO
+    vec![]
 }
 
 fn read(mut prev : String) -> io::Result<Rc<str>> {
