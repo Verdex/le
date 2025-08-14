@@ -1,14 +1,14 @@
 
-use an_a_vm::data::{ Fun as VmFun, Op };
+use an_a_vm::data::{ Fun, Op };
 
 use crate::data::ast::*;
 
 
-pub fn compile(input : Vec<Def>) -> Vec<VmFun<usize>> {
+pub fn compile(input : Vec<Def>) -> Vec<Fun<usize>> {
     todo!()
 }
 
-fn blarg(input : Def) -> VmFun<usize> {
+fn blarg(input : Def) -> Fun<usize> {
     todo!()
 }
 /*
