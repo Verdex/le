@@ -2,7 +2,7 @@
 use std::error::Error;
 use std::rc::Rc;
 use jlnexus::{ Parser, JlnError };
-use crate::data::Token;
+use crate::data::parsing::Token;
 use crate::data::ast::*;
 
 

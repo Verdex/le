@@ -1,7 +1,7 @@
 
 use std::rc::Rc;
 use jlnexus:: { Parser, JlnError };
-use crate::data::{ Meta, Token };
+use crate::data::parsing::{ Meta, Token };
 
 macro_rules! lex_char {
     ($name:ident, $target : literal) => {

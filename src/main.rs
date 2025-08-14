@@ -8,7 +8,7 @@ use std::io::{self, Write};
 
 use crate::parsing::lexer::{self, LexError};
 use crate::parsing::parser::{self, ParseError};
-use crate::data::{Meta};
+use crate::data::parsing::{Meta};
 
 pub fn main() {
 
